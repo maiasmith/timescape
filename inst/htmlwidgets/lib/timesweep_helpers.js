@@ -3,10 +3,10 @@
 // d3 EFFECTS FUNCTIONS
 
 function _sweepClick(vizObj) {
-    var dim = vizObj.view.config,
-        colour_assignment = vizObj.view.colour_assignment,
-        alpha_colour_assignment = vizObj.view.alpha_colour_assignment,
-        x = vizObj.view.userConfig;
+    var dim = vizObj.generalConfig,
+        colour_assignment = vizObj.view[vizObj.patient_id].colour_assignment,
+        alpha_colour_assignment = vizObj.view[vizObj.patient_id].alpha_colour_assignment,
+        x = vizObj.userConfig;
 
     // hide any cellular prevalence labels
     d3.selectAll(".label, .sepLabel")
@@ -16,9 +16,9 @@ function _sweepClick(vizObj) {
 
     // transition to tracks timesweep view
     if (dim.switchView) {
-        var sweeps = vizObj.view.tsSVG
+        var sweeps = vizObj.view[vizObj.patient_id].tsSVG
             .selectAll('.tsPlot')
-            .data(vizObj.data.tracks_bezier_paths, function(d) {
+            .data(vizObj.data[vizObj.patient_id].tracks_bezier_paths, function(d) {
                 return d.gtype;
             })
 
@@ -37,9 +37,9 @@ function _sweepClick(vizObj) {
     }
     // transition to traditional timesweep view
     else {
-        var sweeps = vizObj.view.tsSVG
+        var sweeps = vizObj.view[vizObj.patient_id].tsSVG
             .selectAll('.tsPlot')
-            .data(vizObj.data.bezier_paths, function(d) {
+            .data(vizObj.data[vizObj.patient_id].bezier_paths, function(d) {
                 return d.gtype;
             })
 
@@ -58,15 +58,15 @@ function _sweepClick(vizObj) {
                 return (x.alpha == "NA") ? colour_assignment[d.gtype] : alpha_colour_assignment[d.gtype];
             }) 
             .attr('stroke', function(d) { 
-                return (d.gtype == "Root" && vizObj.view.userConfig.show_root) ? 
+                return (d.gtype == "Root" && vizObj.userConfig.show_root) ? 
                     dim.rootColour : 
                     colour_assignment[d.gtype]; 
             })
             .attr('fill-opacity', function(d) {
-                return (d.gtype == "Root" && !vizObj.view.userConfig.show_root) ? 0 : 1;
+                return (d.gtype == "Root" && !vizObj.userConfig.show_root) ? 0 : 1;
             })
             .attr('stroke-opacity', function(d) {
-                return (d.gtype == "Root" && !vizObj.view.userConfig.show_root) ? 0 : 1;
+                return (d.gtype == "Root" && !vizObj.userConfig.show_root) ? 0 : 1;
             })
             .transition()
             .duration(1000)
@@ -82,11 +82,11 @@ function _gtypeMouseover(gtype, vizObj) {
     if (gtype != "Root") {
         var brightness,
             col,
-            dim = vizObj.view.config,
-            colour_assignment = vizObj.view.colour_assignment,
-            alpha_colour_assignment = vizObj.view.alpha_colour_assignment,
-            patientID_class = 'patientID_' + vizObj.data.patient_id,
-            x = vizObj.view.userConfig;
+            dim = vizObj.generalConfig,
+            colour_assignment = vizObj.view[vizObj.patient_id].colour_assignment,
+            alpha_colour_assignment = vizObj.view[vizObj.patient_id].alpha_colour_assignment,
+            patientID_class = 'patientID_' + vizObj.patient_id,
+            x = vizObj.userConfig;
 
         // dim other genotypes
         d3.selectAll('.tsPlot.' + patientID_class)
@@ -112,7 +112,7 @@ function _gtypeMouseover(gtype, vizObj) {
                     return _rgb2hex("rgb(" + brightness + "," + brightness + "," + brightness + ")");
                 }
                 else {
-                    return (d.gtype == "Root" && vizObj.view.userConfig.show_root) ? 
+                    return (d.gtype == "Root" && vizObj.userConfig.show_root) ? 
                         dim.rootColour : 
                         colour_assignment[d.gtype];
                 }
@@ -147,11 +147,11 @@ function _gtypeMouseover(gtype, vizObj) {
 */
 function _gtypeMouseout(gtype, vizObj) {
     if (gtype != "Root") {
-        var dim = vizObj.view.config,
-            colour_assignment = vizObj.view.colour_assignment,
-            alpha_colour_assignment = vizObj.view.alpha_colour_assignment,
-            patientID_class = 'patientID_' + vizObj.data.patient_id,
-            x = vizObj.view.userConfig;
+        var dim = vizObj.generalConfig,
+            colour_assignment = vizObj.view[vizObj.patient_id].colour_assignment,
+            alpha_colour_assignment = vizObj.view[vizObj.patient_id].alpha_colour_assignment,
+            patientID_class = 'patientID_' + vizObj.patient_id,
+            x = vizObj.userConfig;
 
         // reset colours
         d3.selectAll('.tsPlot.' + patientID_class)
@@ -159,7 +159,7 @@ function _gtypeMouseout(gtype, vizObj) {
                 return (x.alpha == "NA") ? colour_assignment[d.gtype] : alpha_colour_assignment[d.gtype];
             })
             .attr('stroke', function(d) { 
-                return (d.gtype == "Root" && vizObj.view.userConfig.show_root) ? 
+                return (d.gtype == "Root" && vizObj.userConfig.show_root) ? 
                     dim.rootColour : 
                     colour_assignment[d.gtype];
             });
@@ -194,45 +194,47 @@ function _gtypeMouseout(gtype, vizObj) {
 * @param {Object} vizObj 
 */
 function _getTreeInfo(vizObj) {
-    var userConfig = vizObj.view.userConfig,
-        rootName = 'Root';
+    var userConfig = vizObj.userConfig,
+        rootName = 'Root',
+        patient_id = vizObj.patient_id,
+        cur_edges = _.filter(userConfig.tree_edges, function(edge){ return edge.patient_name == patient_id; });
 
     // get tree nodes
-    vizObj.data.treeNodes = _.uniq(userConfig.tree_edges.source.concat(userConfig.tree_edges.target));
+    vizObj.data[patient_id].treeNodes = _.uniq(_.pluck(cur_edges, "source").concat(_.pluck(cur_edges, "target")));
 
     // get tree edges
-    vizObj.data.treeEdges = [];
-    for (var i = 0; i < userConfig.tree_edges.source.length; i++) {
-        vizObj.data.treeEdges.push({
-            "source": userConfig.tree_edges.source[i],
-            "target": userConfig.tree_edges.target[i]
+    vizObj.data[patient_id].treeEdges = [];
+    for (var i = 0; i < cur_edges.length; i++) {
+        vizObj.data[patient_id].treeEdges.push({
+            "source": cur_edges[i].source,
+            "target": cur_edges[i].target
         })
     }
 
     // get tree structure
     var nodesByName = [];
-    for (var i = 0; i < vizObj.data.treeEdges.length; i++) {
-        var parent = _findNodeByName(nodesByName, vizObj.data.treeEdges[i].source);
-        var child = _findNodeByName(nodesByName, vizObj.data.treeEdges[i].target);
+    for (var i = 0; i < vizObj.data[patient_id].treeEdges.length; i++) {
+        var parent = _findNodeByName(nodesByName, vizObj.data[patient_id].treeEdges[i].source);
+        var child = _findNodeByName(nodesByName, vizObj.data[patient_id].treeEdges[i].target);
         parent["children"].push(child);
     }
-    vizObj.data.treeStructure = _findNodeByName(nodesByName, rootName);
+    vizObj.data[patient_id].treeStructure = _findNodeByName(nodesByName, rootName);
     
     // get descendants for each node
-    vizObj.data.treeDescendantsArr = {};
-    vizObj.data.treeNodes.forEach(function(node, idx) {
+    vizObj.data[patient_id].treeDescendantsArr = {};
+    vizObj.data[patient_id].treeNodes.forEach(function(node, idx) {
         var curRoot = _findNodeByName(nodesByName, node);
         var curDescendants = _getDescendantIds(curRoot, []);
-        vizObj.data.treeDescendantsArr[node] = curDescendants;
+        vizObj.data[patient_id].treeDescendantsArr[node] = curDescendants;
     })
-    vizObj.data.direct_descendants = _getDirectDescendants(vizObj.data.treeStructure, {});
+    vizObj.data[patient_id].direct_descendants = _getDirectDescendants(vizObj.data[patient_id].treeStructure, {});
 
     // get ancestors for each node
-    vizObj.data.treeAncestorsArr = _getAncestorIds(vizObj);
-    vizObj.data.direct_ancestors = _getDirectAncestors(vizObj.data.treeStructure, {});
+    vizObj.data[patient_id].treeAncestorsArr = _getAncestorIds(vizObj);
+    vizObj.data[patient_id].direct_ancestors = _getDirectAncestors(vizObj.data[patient_id].treeStructure, {});
 
     // get siblings for each node
-    vizObj.data.siblings = _getSiblings(vizObj.data.treeStructure, {}); 
+    vizObj.data[patient_id].siblings = _getSiblings(vizObj.data[patient_id].treeStructure, {}); 
 }
 
 /* function to find a key by its name - if the key doesn't exist, it will be created and added to the list of nodes
@@ -275,8 +277,8 @@ function _getDescendantIds(root, descendants) {
 function _getAncestorIds(vizObj) {
     var ancestors = {},
         curDescendants,
-        descendants_arr = vizObj.data.treeDescendantsArr,
-        treeNodes = vizObj.data.treeNodes;
+        descendants_arr = vizObj.data[vizObj.patient_id].treeDescendantsArr,
+        treeNodes = vizObj.data[vizObj.patient_id].treeNodes;
 
     // set up each node as originally containing an empty list of ancestors
     treeNodes.forEach(function(node, idx) {
@@ -428,14 +430,15 @@ function _getLinearTreeSegments(curNode, chains, base) {
 * (properties at level 1 is time, at level 2 is gtype)
 */
 function _getCPData(vizObj) {
-    var x = vizObj.view.userConfig;
+    var clonal_prev = _.filter(vizObj.userConfig.clonal_prev, 
+            function(prev) { return prev.patient_name == vizObj.patient_id });
 
     // for each time point, for each genotype, get cellular prevalence
     var cp_data = {};
-    $.each(x.clonal_prev, function(idx, hit) { // for each hit (genotype/timepoint combination)
+    $.each(clonal_prev, function(idx, hit) { // for each hit (genotype/timepoint combination)
 
         // only parse data for a particular patient
-        if (hit["patient_name"] == x.patient) {
+        if (hit["patient_name"] == vizObj.patient_id) {
             cp_data[hit["timepoint"]] = cp_data[hit["timepoint"]] || {};
             cp_data[hit["timepoint"]][hit["clone_id"]] = parseFloat(hit["clonal_prev"]); 
         }
@@ -444,19 +447,19 @@ function _getCPData(vizObj) {
     // create timepoint zero with 100% cellular prevalence for the root of the tree
     cp_data["T0"] = {};
     cp_data["T0"]["Root"] = 1;
-    vizObj.data.cp_data = cp_data;
+    vizObj.data[vizObj.patient_id].cp_data = cp_data;
 }
 
 /* function to get the cellular prevalence value for each genotype at its emergence
 * @param {Object} vizObj
 */
 function _getEmergenceValues(vizObj) {
-    var cp_data = vizObj.data.cp_data,
+    var cp_data = vizObj.data[vizObj.patient_id].cp_data,
         emergence_values = {},
         gtypes;
 
     // for each time point
-    vizObj.data.timepoints.forEach(function(tp) { 
+    vizObj.data[vizObj.patient_id].timepoints.forEach(function(tp) { 
 
         // get genotypes
         gtypes = Object.keys(cp_data[tp]); 
@@ -476,7 +479,7 @@ function _getEmergenceValues(vizObj) {
 * @param {Object} vizObj
 */
 function _getGenotypeCPData(vizObj) {
-    var cp_data = vizObj.data.cp_data,
+    var cp_data = vizObj.data[vizObj.patient_id].cp_data,
         genotype_cp = {};
 
     Object.keys(cp_data).forEach(function(tp, tp_idx) {
@@ -486,7 +489,7 @@ function _getGenotypeCPData(vizObj) {
         });
     }); 
 
-    vizObj.data.genotype_cp = genotype_cp;
+    vizObj.data[vizObj.patient_id].genotype_cp = genotype_cp;
 }
 
 // LAYOUT FUNCTIONS
@@ -496,18 +499,19 @@ function _getGenotypeCPData(vizObj) {
 * @param {Object} vizObj
 */
 function _getLayout(vizObj) {
-    var gtypePos = vizObj.view.userConfig.genotype_position;
+    var gtypePos = vizObj.userConfig.genotype_position,
+        patient_id = vizObj.patient_id;
 
     // ------> CENTRED 
     if (gtypePos == "centre") {
 
         // get genotype layout order
-        vizObj.data.layoutOrder = _getCentredLayoutOrder(vizObj, vizObj.data.treeStructure, []);
+        vizObj.data[patient_id].layoutOrder = _getCentredLayoutOrder(vizObj, vizObj.data[patient_id].treeStructure, []);
 
         // get layout of each genotype at each timepoint
-        vizObj.data.layout = {};
-        $.each(vizObj.data.timepoints, function(tp_idx, tp) { 
-            _getCentredLayout(vizObj, vizObj.data.treeStructure, tp, vizObj.data.layout, 0);
+        vizObj.data[patient_id].layout = {};
+        $.each(vizObj.data[patient_id].timepoints, function(tp_idx, tp) { 
+            _getCentredLayout(vizObj, vizObj.data[patient_id].treeStructure, tp, vizObj.data[patient_id].layout, 0);
         })
     }
 
@@ -515,14 +519,14 @@ function _getLayout(vizObj) {
     else {
 
         // traverse the tree to sort the genotypes into a final vertical stacking order (incorporating hierarchy)
-        vizObj.data.layoutOrder = _getStackedLayoutOrder(vizObj.data.treeStructure, vizObj.data.emergence_values, []);
+        vizObj.data[patient_id].layoutOrder = _getStackedLayoutOrder(vizObj.data[patient_id].treeStructure, vizObj.data[patient_id].emergence_values, []);
 
         // get layout of each genotype at each timepoint
         if (gtypePos == "stack") {
-            vizObj.data.layout = _getStackedLayout(vizObj);
+            vizObj.data[patient_id].layout = _getStackedLayout(vizObj);
         }
         else if (gtypePos == "space") {
-            vizObj.data.layout = _getSpacedLayout(vizObj); 
+            vizObj.data[patient_id].layout = _getSpacedLayout(vizObj); 
         }
     }   
 
@@ -538,11 +542,11 @@ function _getLayout(vizObj) {
 * @param {Array} layoutOrder -- originally empty array will be filled with the layout order of genotypes
 */
 function _getCentredLayoutOrder(vizObj, curNode, layoutOrder) {
-    var emergence_values = vizObj.data.emergence_values,
+    var emergence_values = vizObj.data[vizObj.patient_id].emergence_values,
         child_emerg_vals = [], // emergence values of children
         sorted_children, // children sorted by their emergence values
         child_obj, // current child node 
-        sort_by_emerg = vizObj.view.userConfig.sort_gtypes; // T/F vertically sort children by emergence values
+        sort_by_emerg = vizObj.userConfig.sort_gtypes; // T/F vertically sort children by emergence values
 
     layoutOrder.push(curNode.id);
 
@@ -584,7 +588,7 @@ function _getStackedLayoutOrder(curNode, emergence_values, layoutOrder) {
     var child_emerg_vals = [], // emergence values of children
         sorted_children, // children sorted by their emergence values
         child_obj, // current child node
-        sort_by_emerg = vizObj.view.userConfig.sort_gtypes; // T/F vertically sort children by emergence values
+        sort_by_emerg = vizObj.userConfig.sort_gtypes; // T/F vertically sort children by emergence values
 
     // add the current key id to the final vertical stacking order
     layoutOrder.push(curNode.id);
@@ -628,23 +632,24 @@ function _getStackedLayoutOrder(curNode, emergence_values, layoutOrder) {
 */
 function _getCentredLayout(vizObj, curNode, tp, layout, yBottom) {
     var gtype = curNode.id,
-        cp_data = vizObj.data.cp_data,
-        timepoints = vizObj.data.timepoints,
+        patient_id = vizObj.patient_id,
+        cp_data = vizObj.data[patient_id].cp_data,
+        timepoints = vizObj.data[patient_id].timepoints,
         next_tp = timepoints[timepoints.indexOf(tp)+1],
         prev_tp = timepoints[timepoints.indexOf(tp)-1],
         gTypes_curTP = Object.keys(cp_data[tp]), // genotypes with cp data at the CURRENT time point
         // genotypes with cp data at the PREVIOUS time point
         gTypes_prevTP = (cp_data[prev_tp]) ? Object.keys(cp_data[prev_tp]) : undefined, 
-        curDescendants = vizObj.data.treeDescendantsArr[gtype],
+        curDescendants = vizObj.data[patient_id].treeDescendantsArr[gtype],
         gTypeAndDescendants = ($.extend([], curDescendants)),
         nChildren = curNode.children.length,
         childCP = 0, // cumulative amount of cellular prevalence in the children;
         childYBottom, // bottom y-value for the next child
-        layoutOrder = vizObj.data.layoutOrder,
+        layoutOrder = vizObj.data[patient_id].layoutOrder,
         sorted_children, // children sorted by the layout order
         cur_cp = cp_data[tp][gtype],
         prev_cp = (cp_data[prev_tp]) ? cp_data[prev_tp][gtype] : undefined, // CP for this genotype, prev tp
-        threshold = vizObj.view.config.threshold, // cellular prevalence threshold for visibility of a genotype
+        threshold = vizObj.generalConfig.threshold, // cellular prevalence threshold for visibility of a genotype
         // the width of this genotype, including descendants
         width = _calculateWidth(vizObj, tp, gtype, threshold).width, 
         emerged, // whether or not the genotype emerged at this time point
@@ -684,7 +689,7 @@ function _getCentredLayout(vizObj, curNode, tp, layout, yBottom) {
             "top": yBottom + width,
             "cp": cur_cp,
             "state": "present",
-            "presentChildren": _getIntersection(vizObj.data.direct_descendants[gtype], gTypes_curTP).length
+            "presentChildren": _getIntersection(vizObj.data[patient_id].direct_descendants[gtype], gTypes_curTP).length
         }
 
         // mark disappearance state
@@ -722,16 +727,16 @@ function _getCentredLayout(vizObj, curNode, tp, layout, yBottom) {
 */
 function _getStackedLayout(vizObj) {
     var layout = {},
-        cp_data = vizObj.data.cp_data,
-        timepoints = vizObj.data.timepoints,
-        layoutOrder = vizObj.data.layoutOrder,
+        cp_data = vizObj.data[vizObj.patient_id].cp_data,
+        timepoints = vizObj.data[vizObj.patient_id].timepoints,
+        layoutOrder = vizObj.data[vizObj.patient_id].layoutOrder,
         curDescendants,
         gTypeAndDescendants, // genotype and descendants
         gTypes_curTP, // genotypes with cp data at the CURRENT time point
         effective_cp, // effective cp for this genotype at this timepoint
         width, // width to add for this genotype at this timepoint (includes descendants widths)
         midpoint, // midpoint for emergence
-        threshold = vizObj.view.config.threshold; // cellular prevalence threshold for visibility of a genotype
+        threshold = vizObj.generalConfig.threshold; // cellular prevalence threshold for visibility of a genotype
 
     // for each timepoint (in order)...
     $.each(timepoints, function(tp_idx, tp) { 
@@ -748,7 +753,7 @@ function _getStackedLayout(vizObj) {
         $.each(layoutOrder, function(gtype_idx, gtype) { 
             gTypes_curTP = Object.keys(cp_data[tp]); 
             gTypes_prevTP = (cp_data[prev_tp]) ? Object.keys(cp_data[prev_tp]) : undefined; 
-            curDescendants = vizObj.data.treeDescendantsArr[gtype];
+            curDescendants = vizObj.data[vizObj.patient_id].treeDescendantsArr[gtype];
             gTypeAndDescendants = ($.extend([], curDescendants)); 
             gTypeAndDescendants.push(gtype); 
             
@@ -813,9 +818,9 @@ function _getStackedLayout(vizObj) {
 */
 function _getSpacedLayout(vizObj) {
     var layout = {},
-        cp_data = vizObj.data.cp_data,
-        timepoints = vizObj.data.timepoints,
-        layoutOrder = vizObj.data.layoutOrder,
+        cp_data = vizObj.data[vizObj.patient_id].cp_data,
+        timepoints = vizObj.data[vizObj.patient_id].timepoints,
+        layoutOrder = vizObj.data[vizObj.patient_id].layoutOrder,
         curDescendants,
         gTypeAndDescendants, // genotype and descendants
         curAncestors, // all ancestors of current genotype
@@ -824,9 +829,9 @@ function _getSpacedLayout(vizObj) {
         width, // the cp as the width to add for this genotype at this timepoint
         midpoint, // midpoint for emergence
         ancestor_midpoint, // ancestor's midpoint for emergence
-        direct_ancestors = vizObj.data.direct_ancestors, // direct ancestor for each genotype
-        direct_descendants = vizObj.data.direct_descendants, // direct descendant for each genotype
-        space = 8/vizObj.view.config.height; // space between genotypes (in pixels) 
+        direct_ancestors = vizObj.data[vizObj.patient_id].direct_ancestors, // direct ancestor for each genotype
+        direct_descendants = vizObj.data[vizObj.patient_id].direct_descendants, // direct descendant for each genotype
+        space = 8/vizObj.generalConfig.height; // space between genotypes (in pixels) 
 
     // GET STACKED LAYOUT
 
@@ -920,7 +925,7 @@ function _createStackElement(vizObj, layout, tp, gtype, bottom_val, top_val, eff
         "bottom": bottom_val,
         "top": top_val,
         "state": state,
-        "cp": vizObj.data.cp_data[tp][gtype],
+        "cp": vizObj.data[vizObj.patient_id].cp_data[tp][gtype],
         "effective_cp": effective_cp
     };
 }
@@ -941,9 +946,9 @@ function _createStackElement(vizObj, layout, tp, gtype, bottom_val, top_val, eff
 function _calculateWidth(vizObj, tp, gtype, threshold) {
     var width, // width of this genotype (including all descendants)
         effective_cp, // effective cellular prevalence for this genotype
-        cp = vizObj.data.cp_data[tp], // cellular prevalence for this time point
+        cp = vizObj.data[vizObj.patient_id].cp_data[tp], // cellular prevalence for this time point
         gTypes_curTP = Object.keys(cp), // genotypes existing at the current time point
-        cur_direct_descendants = vizObj.data.direct_descendants[gtype], // current direct descendants of genotype
+        cur_direct_descendants = vizObj.data[vizObj.patient_id].direct_descendants[gtype], // current direct descendants of genotype
         sum_increment = 0, // sum of increment to low prevalence genotypes for this time point
         n_gtypes_high_cp = 0; // number of genotypes above threshold cp
 
@@ -1015,12 +1020,12 @@ function _sortByLayoutOrder(layoutOrder) {
 * @param {Object} vizObj
 */
 function _shiftEmergence(vizObj) {
-    var dim = vizObj.view.config,
-        layout = vizObj.data.layout,
-        layoutOrder = vizObj.data.layoutOrder,
-        timepoints = vizObj.data.timepoints,
-        treeAncestorsArr = vizObj.data.treeAncestorsArr,
-        treeDescendantsArr = vizObj.data.treeDescendantsArr,
+    var dim = vizObj.generalConfig,
+        layout = vizObj.data[vizObj.patient_id].layout,
+        layoutOrder = vizObj.data[vizObj.patient_id].layoutOrder,
+        timepoints = vizObj.data[vizObj.patient_id].timepoints,
+        treeAncestorsArr = vizObj.data[vizObj.patient_id].treeAncestorsArr,
+        treeDescendantsArr = vizObj.data[vizObj.patient_id].treeDescendantsArr,
         nPartitions,
         layoutOrder_rev,
         ancestors,
@@ -1097,8 +1102,8 @@ function _shiftEmergence(vizObj) {
 * @param {Object} vizObj
 */
 function _getTraditionalCPLabels(vizObj) {
-    var dim = vizObj.view.config,
-        layout = vizObj.data.layout,
+    var dim = vizObj.generalConfig,
+        layout = vizObj.data[vizObj.patient_id].layout,
         labels = [], // array of labels
         data, // data for a genotype at a time point
         label, // current label to add
@@ -1111,8 +1116,8 @@ function _getTraditionalCPLabels(vizObj) {
 
             // for each genotype
             Object.keys(layout[tp]).forEach(function(gtype, gtype_idx) {
-                curDescendants = vizObj.data.treeDescendantsArr[gtype];
-                gTypes_curTP = Object.keys(vizObj.data.cp_data[tp]); 
+                curDescendants = vizObj.data[vizObj.patient_id].treeDescendantsArr[gtype];
+                gTypes_curTP = Object.keys(vizObj.data[vizObj.patient_id].cp_data[tp]); 
 
                 // data for this genotype at this time point
                 data = layout[tp][gtype];
@@ -1126,7 +1131,7 @@ function _getTraditionalCPLabels(vizObj) {
                     label = {};
 
                     // CENTRED view
-                    if (vizObj.view.userConfig.genotype_position == "centre") { 
+                    if (vizObj.userConfig.genotype_position == "centre") { 
                         label['tp'] = tp;
                         label['gtype'] = gtype;
                         label['cp'] = data.cp;
@@ -1134,7 +1139,7 @@ function _getTraditionalCPLabels(vizObj) {
                         label['type'] = "traditional";
                     }
                     // STACKED view
-                    else if (vizObj.view.userConfig.genotype_position == "stack") { 
+                    else if (vizObj.userConfig.genotype_position == "stack") { 
                         label['tp'] = tp;
                         label['gtype'] = gtype;
                         label['cp'] = data.cp;
@@ -1142,7 +1147,7 @@ function _getTraditionalCPLabels(vizObj) {
                         label['type'] = "traditional";
                     }
                     // SPACED view
-                    else if (vizObj.view.userConfig.genotype_position == "space") { 
+                    else if (vizObj.userConfig.genotype_position == "space") { 
                         label['tp'] = tp;
                         label['gtype'] = gtype;
                         label['cp'] = data.cp;
@@ -1168,7 +1173,7 @@ function _getTraditionalCPLabels(vizObj) {
 * @param {Object} vizObj
 */
 function _getSeparateCPLabels(vizObj) {
-    var tracks_paths = vizObj.data.tracks_paths,
+    var tracks_paths = vizObj.data[vizObj.patient_id].tracks_paths,
         labels = [],
         label,
         gtype,
@@ -1214,19 +1219,20 @@ function _getSeparateCPLabels(vizObj) {
 * Then gets paths (scale of the plot pixel count) with bezier edges
 */
 function _getPaths(vizObj) {
-    var dim = vizObj.view.config;
+    var dim = vizObj.generalConfig,
+        patient_id = vizObj.patient_id;
 
     // GET PROPORTIONATE, STRAIGHT EDGED PATHS
 
     // convert layout at each time point into a list of moves for each genotype's d3 path object
-    vizObj.data.tracks_paths = _getSeparatePaths(vizObj);
-    vizObj.data.traditional_paths = _getTraditionalPaths(vizObj);
+    vizObj.data[patient_id].tracks_paths = _getSeparatePaths(vizObj);
+    vizObj.data[patient_id].traditional_paths = _getTraditionalPaths(vizObj);
 
     // GET BEZIER PATHS READY FOR PLOTTING
 
     // convert proportionate paths into paths ready for plotting, with bezier curves
-    vizObj.data.bezier_paths = _getBezierPaths(vizObj.data.traditional_paths, dim.tsSVGWidth, dim.tsSVGHeight);
-    vizObj.data.tracks_bezier_paths = _getBezierPaths(vizObj.data.tracks_paths, dim.tsSVGWidth, dim.tsSVGHeight);
+    vizObj.data[patient_id].bezier_paths = _getBezierPaths(vizObj.data[patient_id].traditional_paths, dim.tsSVGWidth, dim.tsSVGHeight);
+    vizObj.data[patient_id].tracks_bezier_paths = _getBezierPaths(vizObj.data[patient_id].tracks_paths, dim.tsSVGWidth, dim.tsSVGHeight);
 
 }
 
@@ -1237,12 +1243,12 @@ function _getPaths(vizObj) {
 * @param {Object} vizObj
 */
 function _getTraditionalPaths(vizObj) {
-    var dim = vizObj.view.config,
-        layout = vizObj.data.layout,
-        timepoints = vizObj.data.timepoints,
+    var dim = vizObj.generalConfig,
+        layout = vizObj.data[vizObj.patient_id].layout,
+        timepoints = vizObj.data[vizObj.patient_id].timepoints,
         timepoints_rev = ($.extend([], timepoints)).reverse(),
         mid_tp = (1/((timepoints.length-1)*2)), // half of x-distance between time points
-        layoutOrder = vizObj.data.layoutOrder,
+        layoutOrder = vizObj.data[vizObj.patient_id].layoutOrder,
         paths = [],
         cur_path,
         emerges, // whether or not a genotype emerges at a time point
@@ -1256,7 +1262,7 @@ function _getTraditionalPaths(vizObj) {
         appear_xTop,
         event_occurs, // whether or not an event occurs after a time point
         event_index, // index of the current event 
-        perturbations = vizObj.data.perturbations, // user specified perturbations in the time-series data
+        perturbations = vizObj.userConfig.perturbations, // user specified perturbations in the time-series data
         frac; // fraction of total tumour content remaining at the perturbation event;
 
     $.each(layoutOrder, function(gtype_idx, gtype) {
@@ -1408,14 +1414,14 @@ function _getTraditionalPaths(vizObj) {
 * @param {Object} vizObj
 */
 function _getSeparatePaths(vizObj) {
-    var dim = vizObj.view.config,
-        timepoints = vizObj.data.timepoints,
+    var dim = vizObj.generalConfig,
+        timepoints = vizObj.data[vizObj.patient_id].timepoints,
         timepoints_rev = ($.extend([], timepoints)).reverse(),
-        layoutOrder = vizObj.data.layoutOrder,
-        genotype_cp = vizObj.data.genotype_cp,
-        layout = vizObj.data.layout,
+        layoutOrder = vizObj.data[vizObj.patient_id].layoutOrder,
+        genotype_cp = vizObj.data[vizObj.patient_id].genotype_cp,
+        layout = vizObj.data[vizObj.patient_id].layout,
         padding = 0.03,
-        ts_sep_labels = vizObj.data.ts_sep_labels,
+        ts_sep_labels = vizObj.data[vizObj.patient_id].ts_sep_labels,
         paths = [],
         sHeight = 0,
         seenGTypes = [],
@@ -1516,8 +1522,8 @@ function _getSeparatePaths(vizObj) {
 * @param {Object} vizObj
 */
 function _centreLine(vizObj) {
-    var tsSVGWidth = vizObj.view.config.tsSVGWidth, // timesweep svg width
-        tsSVGHeight = vizObj.view.config.tsSVGHeight; // timesweep svg height
+    var tsSVGWidth = vizObj.generalConfig.tsSVGWidth, // timesweep svg width
+        tsSVGHeight = vizObj.generalConfig.tsSVGHeight; // timesweep svg height
 
     return "M 0 " + tsSVGHeight/2 + " L " + tsSVGWidth + " " + tsSVGHeight/2 + " L 0 " + tsSVGHeight/2;
 }
@@ -1613,17 +1619,18 @@ function _getBezierPaths(paths, tsSVGWidth, tsSVGHeight) {
 // COLOUR FUNCTIONS
 
 function _getColours(vizObj) {
-    var x = vizObj.view.userConfig,
-        dim = vizObj.view.config,
+    var x = vizObj.userConfig,
+        dim = vizObj.generalConfig,
         colour_assignment = {}, // standard colour assignment
-        alpha_colour_assignment = {}; // alpha colour assignment
+        alpha_colour_assignment = {}, // alpha colour assignment
+        patient_id = vizObj.patient_id;
 
     // get colour assignment based on tree hierarchy
     // --> if unspecified, use default
     if (x.clone_cols == "NA") {
         var colour_palette = _getColourPalette();
-        var chains = _getLinearTreeSegments(vizObj.data.treeStructure, {}, "");
-        colour_assignment = _colourTree(vizObj, chains, vizObj.data.treeStructure, colour_palette, {}, "Greens");
+        var chains = _getLinearTreeSegments(vizObj.data[patient_id].treeStructure, {}, "");
+        colour_assignment = _colourTree(vizObj, chains, vizObj.data[patient_id].treeStructure, colour_palette, {}, "Greens");
     }
     // --> otherwise, use specified colours
     else {
@@ -1640,14 +1647,14 @@ function _getColours(vizObj) {
         });
         colour_assignment['Root'] = "#000000";
     }
-    vizObj.view.colour_assignment = colour_assignment;
+    vizObj.view[patient_id].colour_assignment = colour_assignment;
 
     // get the alpha colour assignment
     Object.keys(colour_assignment).forEach(function(key, key_idx) {
         alpha_colour_assignment[key] = (key == "Root") ? 
             dim.rootColour : _increase_brightness(colour_assignment[key], x.alpha);
     });
-    vizObj.view.alpha_colour_assignment = alpha_colour_assignment;
+    vizObj.view[patient_id].alpha_colour_assignment = alpha_colour_assignment;
 
 }
 /*
@@ -1664,7 +1671,7 @@ function _colourTree(vizObj, chains, curNode, palette, colour_assignment, curThe
 
     // colour node
     if (curNode.id == "Root") {
-        colour_assignment[curNode.id] = vizObj.view.config.rootColour; // grey
+        colour_assignment[curNode.id] = vizObj.generalConfig.rootColour; // grey
         var n = chains[curNode.id].length+1; // + 1 to include the base key (this child)
         var tmp_palette = [];
         for (var j = 8; j >= 0; j -= Math.floor(9/n)) {

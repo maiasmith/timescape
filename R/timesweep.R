@@ -130,17 +130,12 @@ timesweep <- function(clonal_prev,
     stop("The root (id: \"Root\") must be specified as a source.")
   }
 
-  # catch multiple patients
-  if (length(unique(tree_edges[,"patient_name"])) > 1) {
-    stop("Currently, timesweep only takes in one patient - your tree edges data frame contains more than one patient.")
+  # catch if patients are not the same
+  if (!setequal(unique(tree_edges$patient_name), unique(clonal_prev$patient_name))) {
+    stop(paste("Your tree edge and clonal prevalence data frames contain different patient names. ",
+      "Please ensure the patient name is the same.", sep=""))
   }
-  if (length(unique(clonal_prev[,"patient_name"])) > 1) {
-    stop("Currently, timesweep only takes in one patient - your clonal prevalence data frame contains more than one patient.")
-  }
-  if (unique(tree_edges[,"patient_name"]) != unique(clonal_prev[1])) {
-    stop("Your tree edge and clonal prevalence data frames contain different patient names. Please ensure the patient name is the same.")
-  }
-  patient = tree_edges[1,"patient_name"]
+  patients = unique(tree_edges$patient_name);
 
   # GENOTYPE POSITIONING
 
@@ -181,9 +176,9 @@ timesweep <- function(clonal_prev,
 
   # forward options using x
   x = list(
-    patient = patient,
+    patient_ids = patients,
     clonal_prev = jsonlite::toJSON(clonal_prev),
-    tree_edges = tree_edges,
+    tree_edges = jsonlite::toJSON(tree_edges),
     clone_cols = jsonlite::toJSON(clone_colours),
     xaxis_title = xaxis_title,
     yaxis_title = yaxis_title,

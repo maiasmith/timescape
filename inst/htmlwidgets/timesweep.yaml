@@ -19,3 +19,9 @@ dependencies:
    version: 0.0.1
    src: "htmlwidgets/lib"
    script: timesweep_helpers.js
+   stylesheet: timesweep.css
+ - name: gridster
+   version: 0.5.6
+   src: "htmlwidgets/lib"
+   script: jquery.gridster.js
+   stylesheet: jquery.gridster.css
