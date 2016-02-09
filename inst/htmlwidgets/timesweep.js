@@ -269,10 +269,10 @@ HTMLWidgets.widget({
                 return (d.gtype == "Root" && !vizObj.userConfig.show_root) ? 0 : 1;
             })
             .on('mouseover', function(d) {
-                return _gtypeMouseover(d.gtype, vizObj);
+                return _gtypeMouseover(vizObj, d.gtype, patient_id);
             })
             .on('mouseout', function(d) {
-                return _gtypeMouseout(d.gtype, vizObj)
+                return _gtypeMouseout(vizObj, d.gtype, patient_id)
             });
 
         // plot time point guides
@@ -514,10 +514,10 @@ HTMLWidgets.widget({
             .attr('fill', function(d) { return alpha_colour_assignment[d]; })
             .attr('stroke', function(d) { return colour_assignment[d]; })
             .on('mouseover', function(d) {
-                return _gtypeMouseover(d, vizObj);
+                return _gtypeMouseover(vizObj, d, patient_id);
             })
             .on('mouseout', function(d) {
-                return _gtypeMouseout(d, vizObj)
+                return _gtypeMouseout(vizObj, d, patient_id)
             });
 
         // plot legend text
@@ -611,10 +611,10 @@ HTMLWidgets.widget({
             .attr("id", function(d) { return d.sc_id; })
             .attr("r", 4)
             .on('mouseover', function(d) {
-                return _gtypeMouseover(d.id, vizObj);
+                return _gtypeMouseover(vizObj, d.id, patient_id);
             })
             .on('mouseout', function(d) {
-                return _gtypeMouseout(d.id, vizObj)
+                return _gtypeMouseout(vizObj, d.id, patient_id)
             });
 
         // SWITCH between traditional and tracks views

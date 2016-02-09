@@ -76,16 +76,18 @@ function _sweepClick(vizObj) {
 }
 
 /* function for genotype mouseover
+* @param {Object} vizObj
 * @param {String} gtype -- the current genotype being moused over
+* @param {String} patient_id -- id of patient
 */
-function _gtypeMouseover(gtype, vizObj) {
+function _gtypeMouseover(vizObj, gtype, patient_id) {
     if (gtype != "Root") {
         var brightness,
             col,
             dim = vizObj.generalConfig,
-            colour_assignment = vizObj.view[vizObj.patient_id].colour_assignment,
-            alpha_colour_assignment = vizObj.view[vizObj.patient_id].alpha_colour_assignment,
-            patientID_class = 'patientID_' + vizObj.patient_id,
+            colour_assignment = vizObj.view[patient_id].colour_assignment,
+            alpha_colour_assignment = vizObj.view[patient_id].alpha_colour_assignment,
+            patientID_class = 'patientID_' + patient_id,
             x = vizObj.userConfig;
 
         // dim other genotypes
@@ -125,7 +127,7 @@ function _gtypeMouseover(gtype, vizObj) {
                 .attr('opacity', 1);
 
             // show label backgrounds
-            d3.selectAll(".labelCirc.gtype_" + gtype)
+            d3.selectAll(".labelCirc.gtype_" + gtype + '.' + patientID_class)
                 .attr('fill-opacity', 0.5);                
         }
 
@@ -136,21 +138,23 @@ function _gtypeMouseover(gtype, vizObj) {
                 .attr('opacity', 1);
 
             // show label backgrounds
-            d3.selectAll(".sepLabelCirc.gtype_" + gtype)
+            d3.selectAll(".sepLabelCirc.gtype_" + gtype + '.' + patientID_class)
                 .attr('fill-opacity', 0.5);                
         }
     }
 }
 
 /* function for genotype mouseout
-* @param {String} gtype -- the current genotype being moused out
+* @param {Object} vizObj
+* @param {String} gtype -- the current genotype being moused over
+* @param {String} patient_id -- id of patient
 */
-function _gtypeMouseout(gtype, vizObj) {
+function _gtypeMouseout(vizObj, gtype, patient_id) {
     if (gtype != "Root") {
         var dim = vizObj.generalConfig,
-            colour_assignment = vizObj.view[vizObj.patient_id].colour_assignment,
-            alpha_colour_assignment = vizObj.view[vizObj.patient_id].alpha_colour_assignment,
-            patientID_class = 'patientID_' + vizObj.patient_id,
+            colour_assignment = vizObj.view[patient_id].colour_assignment,
+            alpha_colour_assignment = vizObj.view[patient_id].alpha_colour_assignment,
+            patientID_class = 'patientID_' + patient_id,
             x = vizObj.userConfig;
 
         // reset colours
