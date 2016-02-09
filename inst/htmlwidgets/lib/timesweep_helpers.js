@@ -2,10 +2,10 @@
 
 // d3 EFFECTS FUNCTIONS
 
-function _sweepClick(vizObj) {
+function _switchView(vizObj, patient_id) {
     var dim = vizObj.generalConfig,
-        colour_assignment = vizObj.view[vizObj.patient_id].colour_assignment,
-        alpha_colour_assignment = vizObj.view[vizObj.patient_id].alpha_colour_assignment,
+        colour_assignment = vizObj.view[patient_id].colour_assignment,
+        alpha_colour_assignment = vizObj.view[patient_id].alpha_colour_assignment,
         x = vizObj.userConfig;
 
     // hide any cellular prevalence labels
@@ -16,9 +16,9 @@ function _sweepClick(vizObj) {
 
     // transition to tracks timesweep view
     if (dim.switchView) {
-        var sweeps = vizObj.view[vizObj.patient_id].tsSVG
+        var sweeps = vizObj.view[patient_id].tsSVG
             .selectAll('.tsPlot')
-            .data(vizObj.data[vizObj.patient_id].tracks_bezier_paths, function(d) {
+            .data(vizObj.data[patient_id].tracks_bezier_paths, function(d) {
                 return d.gtype;
             })
 
@@ -37,9 +37,9 @@ function _sweepClick(vizObj) {
     }
     // transition to traditional timesweep view
     else {
-        var sweeps = vizObj.view[vizObj.patient_id].tsSVG
+        var sweeps = vizObj.view[patient_id].tsSVG
             .selectAll('.tsPlot')
-            .data(vizObj.data[vizObj.patient_id].bezier_paths, function(d) {
+            .data(vizObj.data[patient_id].bezier_paths, function(d) {
                 return d.gtype;
             })
 

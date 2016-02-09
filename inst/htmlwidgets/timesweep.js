@@ -627,7 +627,7 @@ HTMLWidgets.widget({
             .attr('width', 50)
             .attr('height', 20)
             .append("xhtml:body")
-            .html("<input type=\"checkbox\">");
+            .html("<input type=\"checkbox\" class=\"" + patient_id + "\">");
 
         // checkbox text
         vizObj.view[patient_id].tsSwitch
@@ -641,8 +641,8 @@ HTMLWidgets.widget({
             .text("Tracks View")
 
         // when checkbox selected, change view
-        d3.select("input").on("change", function() {
-            _sweepClick(vizObj);
+        d3.select("input." + patient_id).on("change", function() {
+            _switchView(vizObj, patient_id);
         });
 
     })
