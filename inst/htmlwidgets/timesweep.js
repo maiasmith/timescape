@@ -13,7 +13,8 @@ HTMLWidgets.widget({
         legendWidth: 100,
         treeHeight: 100,
         treeWidth: 100,
-        xAxisTitleDIVHeight: 30, // height of the x axis title DIV
+        xAxisTitleDIVHeight: 45, // height of the x axis title DIV
+        yAxisTitleDIVHeight: 30, // height of the y axis title DIV
         smallMargin: 5,
         widgetMargin: 10, // marging between widgets
         transitionSpeed: 200,
@@ -66,12 +67,12 @@ HTMLWidgets.widget({
     dim.canvasSVGHeight = ((dim.height/numPatients) <= 200) ? // minimum height is 200px
         200 :
         (dim.height/numPatients) - (10 * (numPatients+1)) - dim.padding*2;
-    dim.tsSVGHeight = dim.canvasSVGHeight - dim.smallMargin;
+    dim.tsSVGHeight = dim.canvasSVGHeight;
     dim.tsSVGWidth = dim.canvasSVGWidth - dim.padding - dim.legendWidth - dim.treeWidth - dim.patientTabWidth;
     dim.xAxisWidth = dim.tsSVGWidth;
     dim.gridHeight = dim.canvasSVGHeight + dim.padding*2;
     dim.gridWidth = dim.canvasSVGWidth + dim.padding*2;
-
+    
 
     // SET UP BODY
 
@@ -130,7 +131,7 @@ HTMLWidgets.widget({
         .attr('class', 'axisTitle yAxis')
         .attr('x', 0)
         .attr('y', 0)
-        .attr('transform', "translate(" + (dim.xAxisTitleDIVHeight) + ", " + 
+        .attr('transform', "translate(" + (dim.yAxisTitleDIVHeight) + ", " + 
             ((dim.gridHeight*numPatients + dim.widgetMargin*(numPatients-1))/2) + ") rotate(-90)")
         .text(function() { 
             return x.yaxis_title;
@@ -170,7 +171,7 @@ HTMLWidgets.widget({
 
 
     // SET UP PAGE LAYOUT FOR EACH PATIENT
-    vizObj.userConfig.patient_ids.forEach(function(patient_id) {
+    vizObj.userConfig.patient_ids.forEach(function(patient_id, patient_idx) {
 
         vizObj.patient_id = patient_id;
         vizObj.view[patient_id] = {};
@@ -199,17 +200,15 @@ HTMLWidgets.widget({
             .attr("class", "yAxisSVG_" + patient_id)      
             .attr("transform", "translate(" + 0 + "," + 0 + ")");
 
-        var xAxisSVG = d3.select(".canvasSVG_" + patient_id) 
+        var xAxisSVG = d3.select(".gridSVG_" + patient_id) 
             .append("g") 
-            .attr("class", "xAxisSVG_" + patient_id)      
-            .attr("transform", "translate(" + 0 + "," + (dim.tsSVGHeight + dim.smallMargin) + ")");
+            .attr("class", "xAxisSVG_" + patient_id)
+            .attr("transform", "translate(" + dim.padding + ",0)");
 
         var tsLegendSVG = d3.select(".canvasSVG_" + patient_id)
             .append("g") 
             .attr("class", "tsLegendSVG_" + patient_id)
-            .attr("transform", "translate(" + 
-                (dim.tsSVGWidth + dim.padding) + 
-                ",0)");
+            .attr("transform", "translate(" + (dim.tsSVGWidth + dim.padding) + ",0)");
 
         var tsTree = d3.select(".canvasSVG_" + patient_id)
             .append("g") 
@@ -268,7 +267,10 @@ HTMLWidgets.widget({
         _getTreeInfo(vizObj);
 
         // get timepoints, prepend a "T0" timepoint to represent the timepoint before any data originated
-        var timepoints = _.uniq(_.pluck(x.clonal_prev, "timepoint"));
+        var cur_clonal_prev = _.filter(vizObj.userConfig.clonal_prev, function(prev){ // CP data for this patient
+            return prev.patient_name == patient_id; 
+        });
+        var timepoints = _.uniq(_.pluck(cur_clonal_prev, "timepoint"));
         timepoints.unshift("T0");
         vizObj.data[patient_id].timepoints = timepoints;
 
@@ -507,15 +509,17 @@ HTMLWidgets.widget({
             .attr('x', function(d, i) { 
                 return (i / (vizObj.data[patient_id].timepoints.length-1)) * (dim.tsSVGWidth); 
             })
-            .attr('y', 0)
-            .attr('dy', '.71em')
+            .attr('y', dim.padding - dim.smallMargin)
             .text(function(d) { return d; })
             .on('mouseover', function(d) {
                 d3.selectAll(".tpGuide.tp_" + d + '.' + patientID_class).attr('stroke-opacity', 1); 
+                
             })
             .on('mouseout', function(d) {
                 d3.selectAll(".tpGuide.tp_" + d + '.' + patientID_class).attr('stroke-opacity', 0);
-            });
+            });      
+        
+
 
         // PLOT LEGEND
 
