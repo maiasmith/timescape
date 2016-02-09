@@ -56,6 +56,9 @@ HTMLWidgets.widget({
 
     // get params from R
     vizObj.userConfig = x;
+    if (typeof(vizObj.userConfig.patient_ids) == "string") { // only one patient
+        vizObj.userConfig.patient_ids = [vizObj.userConfig.patient_ids];
+    }
     var numPatients = vizObj.userConfig.patient_ids.length; 
 
     // set parameters for grids
@@ -167,7 +170,6 @@ HTMLWidgets.widget({
 
 
     // SET UP PAGE LAYOUT FOR EACH PATIENT
-
     vizObj.userConfig.patient_ids.forEach(function(patient_id) {
 
         vizObj.patient_id = patient_id;
