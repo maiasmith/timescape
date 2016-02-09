@@ -67,8 +67,8 @@ timesweep <- function(clonal_prev,
                       show_root = TRUE, 
                       perturbations = "NA", 
                       sort = TRUE, 
-                      width = NULL, 
-                      height = NULL) {
+                      width = 900, 
+                      height = 500) {
   
   # CHECK REQUIRED INPUTS ARE PRESENT 
   if (missing(clonal_prev)) {

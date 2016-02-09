@@ -2,6 +2,11 @@
 
 // d3 EFFECTS FUNCTIONS
 
+/* function to switch between traditional and tracks view
+* @param {Object} vizObj
+* @param {String} gtype -- the current genotype being moused over
+* @param {String} patient_id -- id of patient
+*/
 function _switchView(vizObj, patient_id) {
     var dim = vizObj.generalConfig,
         colour_assignment = vizObj.view[patient_id].colour_assignment,

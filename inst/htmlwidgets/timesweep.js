@@ -10,12 +10,12 @@ HTMLWidgets.widget({
     // defaults
     var defaults = {
         padding: 15,
-        legendWidth: 110,
+        legendWidth: 100,
         treeHeight: 100,
         treeWidth: 100,
-        xAxisHeight: 30,
-        yAxisWidth: 20,
+        xAxisTitleDIVHeight: 30, // height of the x axis title DIV
         smallMargin: 5,
+        widgetMargin: 10, // marging between widgets
         transitionSpeed: 200,
         isPopOverVisible: false,
         button: false,
@@ -56,18 +56,16 @@ HTMLWidgets.widget({
 
     // get params from R
     vizObj.userConfig = x;
-    var numPatients = 2; // TODO
+    var numPatients = vizObj.userConfig.patient_ids.length; 
 
     // set parameters for grids
     dim.canvasSVGWidth = dim.width - dim.padding*2;
-    dim.canvasSVGHeight = ((dim.height/numPatients) >= 350) ? // minimum height restriction
-        (dim.height/numPatients) - (10 * (numPatients+1)) - dim.padding*2: 
-        350;
-    dim.tsSVGHeight = dim.canvasSVGHeight - dim.xAxisHeight - dim.smallMargin;
-    dim.tsSVGWidth = dim.canvasSVGWidth - dim.legendWidth - dim.yAxisWidth - dim.smallMargin - dim.padding
-        - dim.patientTabWidth;
+    dim.canvasSVGHeight = ((dim.height/numPatients) <= 200) ? // minimum height is 200px
+        200 :
+        (dim.height/numPatients) - (10 * (numPatients+1)) - dim.padding*2;
+    dim.tsSVGHeight = dim.canvasSVGHeight - dim.smallMargin;
+    dim.tsSVGWidth = dim.canvasSVGWidth - dim.padding - dim.legendWidth - dim.treeWidth - dim.patientTabWidth;
     dim.xAxisWidth = dim.tsSVGWidth;
-    dim.yAxisHeight = dim.tsSVGHeight;
     dim.gridHeight = dim.canvasSVGHeight + dim.padding*2;
     dim.gridWidth = dim.canvasSVGWidth + dim.padding*2;
 
@@ -78,12 +76,76 @@ HTMLWidgets.widget({
     d3.select("body")
         .style("background-color", dim.backgroundColour);
 
-    // SET UP GRIDSTER
+    // CONTAINER DIV
 
-    var gridster_ul = d3.select(el)
+    var containerDIV = d3.select(el)
         .append("div")
+        .attr("class", "containerDIV")
+        .style("width", dim.width)
+        .style("height", dim.height);
+
+
+    // STATIC DIVS
+
+    var xAxisTitleDIV = d3.select(".containerDIV")
+        .append("div")
+        .attr("class", "xAxisTitleDIV")
+        .style("height", dim.xAxisTitleDIVHeight);
+
+    var xAxisTitleSVG = xAxisTitleDIV.append("svg:svg")
+        .attr("height", dim.xAxisTitleDIVHeight)
+        .attr("width", dim.width);
+
+    // plot x-axis title
+    xAxisTitleSVG.append("rect")
+        .attr("x", dim.padding)
+        .attr("y", 0)
+        .attr("height", dim.xAxisTitleDIVHeight)
+        .attr("width", dim.tsSVGWidth)
+        .attr("fill", dim.backgroundColour)
+        .attr("stroke", dim.backgroundColour);
+
+    xAxisTitleSVG.append('text')
+        .attr('class', 'axisTitle xAxis')
+        .attr('x', dim.padding + dim.xAxisWidth/2)
+        .attr('y', dim.xAxisTitleDIVHeight - dim.smallMargin)
+        .text(function() { 
+            return x.xaxis_title;
+        });
+
+    var yAxisTitleDIV = d3.select(".containerDIV")
+        .append("div")
+        .attr("class", "yAxisTitleDIV")
+        .style("height", window.innerHeight);
+
+    var yAxisTitleSVG = yAxisTitleDIV.append("svg:svg")
+        .attr("height", window.innerHeight)
+        .attr("width", dim.xAxisTitleDIVHeight);
+
+    // plot y-axis title
+    yAxisTitleSVG.append('text')
+        .attr('class', 'axisTitle yAxis')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('transform', "translate(" + (dim.xAxisTitleDIVHeight) + ", " + 
+            ((dim.gridHeight*numPatients + dim.widgetMargin*(numPatients-1))/2) + ") rotate(-90)")
+        .text(function() { 
+            return x.yaxis_title;
+        });
+
+
+    // GRIDSTER
+
+    var gridster_ul = d3.select(".containerDIV") // unordered list
+        .append("div")
+        // .style("z-index", -1)
+        .style("height", dim.height)
+        .style("width", dim.width)
         .attr("class", "gridster")
-        .append("ul"); // unordered list
+        .append("ul")        
+        .style("height", dim.height)
+        .style("width", dim.width);
+
     gridster_ul.selectAll("li")
         .data(vizObj.userConfig.patient_ids)
         .enter().append("li")
@@ -95,7 +157,7 @@ HTMLWidgets.widget({
 
     // initialize grid
     $(".gridster ul").gridster({
-        widget_margins: [10, 10],
+        widget_margins: [0, dim.widgetMargin],
         widget_base_dimensions: [dim.gridWidth, 
                                  dim.gridHeight],
         max_cols: 1
@@ -118,19 +180,17 @@ HTMLWidgets.widget({
             .attr("x", 0)
             .attr("y", 0) 
             .attr("width", dim.gridWidth) 
-            .attr("height", dim.gridHeight)
-            .style("float", "left");
+            .attr("height", dim.gridHeight);
 
         var canvasSVG = d3.select(".gridSVG_" + patient_id) 
             .append("g")
             .attr("class", "canvasSVG_" + patient_id)
-            .attr("transform", "translate(" + (dim.patientTabWidth + dim.padding) + "," + 
+            .attr("transform", "translate(" + dim.padding + "," + 
                 dim.padding + ")");
 
         var tsSVG = d3.select(".canvasSVG_" + patient_id)
             .append("g")  
-            .attr("class", "tsSVG_" + patient_id)     
-            .attr("transform", "translate(" + (dim.yAxisWidth + dim.smallMargin) + "," + 0 + ")");
+            .attr("class", "tsSVG_" + patient_id);
 
         var yAxisSVG = d3.select(".canvasSVG_" + patient_id) 
             .append("g") 
@@ -146,16 +206,20 @@ HTMLWidgets.widget({
             .append("g") 
             .attr("class", "tsLegendSVG_" + patient_id)
             .attr("transform", "translate(" + 
-                (dim.yAxisWidth + dim.smallMargin + dim.tsSVGWidth + dim.padding) + 
-                "," + 0 + ")");
+                (dim.tsSVGWidth + dim.padding) + 
+                ",0)");
 
         var tsTree = d3.select(".canvasSVG_" + patient_id)
             .append("g") 
-            .attr("class", "tsTreeSVG_" + patient_id);
+            .attr("class", "tsTreeSVG_" + patient_id)
+            .attr("transform", "translate(" + 
+            (dim.tsSVGWidth + dim.padding + dim.legendWidth) + ",0)");
 
+        // move the switch SVG down by the height of the legend + height of the tree
         var tsSwitch = d3.select(".canvasSVG_" + patient_id)
             .append("g") 
-            .attr("class", "tsSwitchSVG_" + patient_id);
+            .attr("class", "tsSwitchSVG_" + patient_id)
+            .attr("transform", "translate(" + (dim.tsSVGWidth + dim.padding) + "," + (dim.tsSVGHeight - 25) + ")");
 
         vizObj.view[patient_id].gridSVG = gridSVG;
         vizObj.view[patient_id].canvasSVG = canvasSVG;
@@ -174,10 +238,12 @@ HTMLWidgets.widget({
             .attr("class", "patientTabG");
 
         // tab rectangle
+        var spaceBeforePatientTab = dim.padding + dim.tsSVGWidth + dim.padding + dim.legendWidth 
+            + dim.treeWidth + dim.padding;
         patientTabG.append("rect")
             .attr("width", dim.patientTabWidth)
             .attr("height", dim.gridHeight)
-            .attr("x", 0)
+            .attr("x", spaceBeforePatientTab)
             .attr("y", 0)
             .attr("fill", "#ABAAAA")
             .attr("stroke", "white")
@@ -185,12 +251,11 @@ HTMLWidgets.widget({
 
         // tab text
         patientTabG.append("text")
-            .attr("text-anchor", "middle")
+            .attr("class", "patientTabText")
             .attr("dy", "0.35em")
-            .attr("transform", "translate(" + dim.patientTabWidth/2 + "," + dim.gridHeight/2 + ") rotate(-90)")
-            .attr('font-family', 'sans-serif')
-            .attr('font-size', '15px')
-            .attr('font-weight', 'bold')
+            .attr("transform", "translate(" 
+                + (spaceBeforePatientTab + dim.patientTabWidth/2) + "," 
+                + dim.gridHeight/2 + ") rotate(-90)")
             .attr("fill", "white")
             .text(patient_id);
 
@@ -199,18 +264,6 @@ HTMLWidgets.widget({
 
         // extract all info from tree about nodes, edges, ancestors, descendants
         _getTreeInfo(vizObj);
-
-        // move the tree SVG down by the height of the legend
-        // 25 for legend title and space
-        var legendHeight = vizObj.data[patient_id].treeNodes.length * dim.legendGtypeHeight + 25 + 25; 
-        vizObj.view[patient_id].tsTree.attr("transform", "translate(" + 
-            (dim.yAxisWidth + dim.smallMargin + dim.tsSVGWidth + dim.padding) + "," + 
-            legendHeight + ")");
-
-        // move the switch SVG down by the height of the legend + height of the tree
-        vizObj.view[patient_id].tsSwitch.attr("transform", "translate(" + 
-            (dim.yAxisWidth + dim.smallMargin + dim.tsSVGWidth + dim.padding) + "," + 
-            (dim.tsSVGHeight - 25) + ")");
 
         // get timepoints, prepend a "T0" timepoint to represent the timepoint before any data originated
         var timepoints = _.uniq(_.pluck(x.clonal_prev, "timepoint"));
@@ -407,14 +460,10 @@ HTMLWidgets.widget({
             .attr('class', 'pertLabel')
             .attr('x', function(d) { 
                 var prevTP_idx = vizObj.data[patient_id].timepoints.indexOf(d.prev_tp);
-                return ((prevTP_idx + 0.5) / (vizObj.data[patient_id].timepoints.length-1)) * (dim.tsSVGWidth) + 
-                    dim.smallMargin + dim.yAxisWidth; 
+                return ((prevTP_idx + 0.5) / (vizObj.data[patient_id].timepoints.length-1)) * (dim.tsSVGWidth); 
             })
             .attr('y', 0)
             .attr('dy', '.71em')
-            .attr('text-anchor', 'middle')
-            .attr('font-family', 'sans-serif')
-            .attr('font-size', '11px')
             .text(function(d) { return d.pert_name; })
             .on('mouseover', function(d) {
                 d3.selectAll(".pertGuide.pert_" + d.pert_name + '.' + patientID_class).attr('stroke-opacity', 1); 
@@ -445,7 +494,7 @@ HTMLWidgets.widget({
             .style('pointer-events', 'none');
 
 
-        // PLOT AXES
+        // PLOT X-AXIS
 
         // plot x-axis labels
         vizObj.view[patient_id].xAxisSVG
@@ -454,49 +503,16 @@ HTMLWidgets.widget({
             .enter().append('text')
             .attr('class', 'xAxisLabels')
             .attr('x', function(d, i) { 
-                return (i / (vizObj.data[patient_id].timepoints.length-1)) * (dim.tsSVGWidth) + dim.smallMargin + dim.yAxisWidth; 
+                return (i / (vizObj.data[patient_id].timepoints.length-1)) * (dim.tsSVGWidth); 
             })
             .attr('y', 0)
             .attr('dy', '.71em')
-            .attr('text-anchor', 'middle')
-            .attr('font-family', 'sans-serif')
-            .attr('font-size', '11px')
             .text(function(d) { return d; })
             .on('mouseover', function(d) {
                 d3.selectAll(".tpGuide.tp_" + d + '.' + patientID_class).attr('stroke-opacity', 1); 
             })
             .on('mouseout', function(d) {
                 d3.selectAll(".tpGuide.tp_" + d + '.' + patientID_class).attr('stroke-opacity', 0);
-            });
-
-        // plot y-axis title
-        vizObj.view[patient_id].yAxisSVG
-            .append('text')
-            .attr('class', 'axisTitle yAxis')
-            .attr('x', 0)
-            .attr('y', 0)
-            .attr('dy', '.35em')
-            .attr('text-anchor', 'middle')
-            .attr('font-family', 'sans-serif')
-            .attr('font-size', '15px')
-            .attr('font-weight', 'bold')
-            .attr('transform', "translate(" + (dim.yAxisWidth/2) + ", " + (dim.tsSVGHeight/2) + ") rotate(-90)")
-            .text(function() { 
-                return x.yaxis_title;
-            });
-
-        // plot x-axis title
-        vizObj.view[patient_id].xAxisSVG
-            .append('text')
-            .attr('class', 'axisTitle xAxis')
-            .attr('x', dim.yAxisWidth + dim.smallMargin + dim.xAxisWidth/2)
-            .attr('y', 25)
-            .attr('text-anchor', 'middle')
-            .attr('font-family', 'sans-serif')
-            .attr('font-size', '15px')
-            .attr('font-weight', 'bold')
-            .text(function() { 
-                return x.xaxis_title;
             });
 
         // PLOT LEGEND
@@ -542,10 +558,6 @@ HTMLWidgets.widget({
             .attr('x', 0)
             .attr('y', 0)
             .attr('dy', '.71em')
-            .attr('text-anchor', 'left')
-            .attr('font-family', 'sans-serif')
-            .attr('font-size', '15px')
-            .attr('font-weight', 'bold')
             .text('Genotype');
 
 
@@ -558,10 +570,6 @@ HTMLWidgets.widget({
             .attr('x', 0)
             .attr('y', 0)
             .attr('dy', '.71em')
-            .attr('text-anchor', 'left')
-            .attr('font-family', 'sans-serif')
-            .attr('font-size', '15px')
-            .attr('font-weight', 'bold')
             .text('Tree'); 
 
         // d3 tree layout
@@ -632,12 +640,9 @@ HTMLWidgets.widget({
         // checkbox text
         vizObj.view[patient_id].tsSwitch
             .append("text")
+            .attr("class", "switchTitle")
             .attr('x', 17)
             .attr('y', 15)
-            .attr('text-anchor', 'left')
-            .attr('font-family', 'sans-serif')
-            .attr('font-size', '15px')
-            .attr('font-weight', 'bold')
             .text("Tracks View")
 
         // when checkbox selected, change view

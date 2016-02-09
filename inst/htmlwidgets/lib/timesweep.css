@@ -1,3 +1,42 @@
 ul, ol {
     list-style: none;
 }
+
+.yAxisTitleDIV {
+	margin-top:10px;
+	position: fixed;
+	left: 0;
+}
+
+.xAxisTitleDIV {
+	position: fixed;
+	top: 0;
+	width: 100%;
+}
+
+.axisTitle {
+	text-anchor: middle;
+	font-family: sans-serif;
+	font-size: 15px;
+	font-weight: bold;
+}
+
+.patientTabText {
+	font-family: sans-serif;
+	font-size: 15px;
+	font-weight: bold;
+	text-anchor: middle; 
+}
+
+.pertLabel, .xAxisLabels {
+	text-anchor: middle;
+	font-family: sans-serif;
+	font-size: 11px;
+}
+
+.legendTitle, .treeTitle, .switchTitle {
+	text-anchor: left;
+	font-family: sans-serif;
+	font-size: 15px;
+	font-weight: bold;
+}
