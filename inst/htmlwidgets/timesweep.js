@@ -42,8 +42,8 @@ HTMLWidgets.widget({
     vizObj.generalConfig = config;
     var dim = vizObj.generalConfig;
 
-    dim.width = width - dim.xAxisTitleDIVHeight-30;
-    dim.height = height;
+    dim.width = width - dim.yAxisTitleDIVHeight - 30;
+    dim.height = height - dim.xAxisTitleDIVHeight - 30;
 
     return {}
     
@@ -83,10 +83,10 @@ HTMLWidgets.widget({
         .style("background-color", dim.backgroundColour);
 
     // CONTAINER DIV
-
+    var random_id = _makeid();
     var containerDIV = d3.select(el)
         .append("div")
-        .attr("class", "containerDIV")
+        .attr("class", "containerDIV_" + random_id)
         .style("position", "relative")
         .style("width", dim.width)
         .style("height", dim.height);
@@ -94,14 +94,15 @@ HTMLWidgets.widget({
 
     // STATIC DIVS
 
-    var xAxisTitleDIV = d3.select(".containerDIV")
+    var xAxisTitleDIV = d3.select(".containerDIV_" + random_id)
         .append("div")
         .attr("class", "xAxisTitleDIV")
-        .style("height", dim.xAxisTitleDIVHeight + "px");
+        .style("height", dim.xAxisTitleDIVHeight + "px")
+        .style("width", (dim.padding*2 + dim.xAxisWidth) + "px");
 
     var xAxisTitleSVG = xAxisTitleDIV.append("svg:svg")
         .attr("height", dim.xAxisTitleDIVHeight)
-        .attr("width", dim.width);
+        .attr("width", dim.gridCellWidth);
 
     // plot x-axis title
     xAxisTitleSVG.append('text')
@@ -112,7 +113,7 @@ HTMLWidgets.widget({
             return x.xaxis_title;
         });
 
-    var yAxisTitleDIV = d3.select(".containerDIV")
+    var yAxisTitleDIV = d3.select(".containerDIV_" + random_id)
         .append("div")
         .attr("class", "yAxisTitleDIV")
         .style("height", dim.gridHeight + "px");
@@ -134,12 +135,12 @@ HTMLWidgets.widget({
 
     // GRIDSTER
 
-    var gridster_ul = d3.select(".containerDIV") // unordered list
+    var gridster_ul = d3.select(".containerDIV_" + random_id) // unordered list
         .append("div")
         .attr("class", "gridster")
         .style("float", "left")
-        .style("height", dim.height + "px")
-        .style("width", dim.width + "px")
+        .style("height", dim.gridHeight + "px")
+        .style("width", dim.gridCellWidth + "px")
         .append("ul")    
         .style("float", "left"); 
 
@@ -165,7 +166,7 @@ HTMLWidgets.widget({
 
     // GET MAX TIME SPAN
 
-    var max_timespan_sum = _getMaxTimespanSum(vizObj);
+    // var max_timespan_sum = _getMaxTimespanSum(vizObj);
 
     // SET UP PAGE LAYOUT FOR EACH PATIENT
     vizObj.userConfig.patient_ids.forEach(function(patient_id, patient_idx) {
