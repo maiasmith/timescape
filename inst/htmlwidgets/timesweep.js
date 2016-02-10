@@ -72,7 +72,7 @@ HTMLWidgets.widget({
     dim.xAxisWidth = dim.tsSVGWidth;
     dim.gridHeight = dim.canvasSVGHeight + dim.padding*2;
     dim.gridWidth = dim.canvasSVGWidth + dim.padding*2;
-    
+
 
     // SET UP BODY
 
@@ -170,6 +170,10 @@ HTMLWidgets.widget({
     var gridster = $(".gridster ul").gridster().data('gridster');
 
 
+    // GET MAX TIME SPAN
+
+    var max_timespan_sum = _getMaxTimespanSum(vizObj);
+
     // SET UP PAGE LAYOUT FOR EACH PATIENT
     vizObj.userConfig.patient_ids.forEach(function(patient_id, patient_idx) {
 
@@ -265,6 +269,9 @@ HTMLWidgets.widget({
 
         // extract all info from tree about nodes, edges, ancestors, descendants
         _getTreeInfo(vizObj);
+
+        console.log("vizObj.userConfig.clonal_prev");
+        console.log(vizObj.userConfig.clonal_prev);
 
         // get timepoints, prepend a "T0" timepoint to represent the timepoint before any data originated
         var cur_clonal_prev = _.filter(vizObj.userConfig.clonal_prev, function(prev){ // CP data for this patient

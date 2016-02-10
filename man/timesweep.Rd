@@ -7,14 +7,16 @@
 timesweep(clonal_prev, tree_edges, clone_colours = "NA",
   xaxis_title = "Time Point", yaxis_title = "Relative Cellular Prevalence",
   alpha = 50, genotype_position = "stack", show_root = TRUE,
-  perturbations = "NA", sort = TRUE, width = NULL, height = NULL)
+  perturbations = "NA", sort = TRUE, width = 900, height = 500)
 }
 \arguments{
 \item{clonal_prev}{Clonal prevalence data frame.
 Format: columns are (1) {String} "patient_name" - patient name
                     (2) {String} "timepoint" - time point
                     (3) {String} "clone_id" - clone id
-                    (4) {Number} "clonal_prev" - clonal prevalence.}
+                    (4) {Number} "clonal_prev" - clonal prevalence.
+                    (5) (Optional) {Number} "time_diff" - time difference between the stated time point and 
+                                                          the following time point}
 
 \item{tree_edges}{Tree edges data frame. The root of the tree (id: "Root") must be specified as a source.
 Format: columns are (1) {String} "patient_name" - patient name
@@ -69,7 +71,8 @@ clonal_prev <- data.frame( patient_name = c("SAMPLE_PATIENT"),
                            timepoint = c(rep("T1", 6), rep("T2", 6)), 
                            clone_id = c("1","6","5","4","3","2","1","6","5","4","3","2"),
                            clonal_prev = c("0.0205127","0.284957","0.637239","0.0477972","0.00404099","0.00545235",
-                                           "0.0134362","0.00000150677","0.00000385311","0.000627522","0.551521","0.43441"))
+                                           "0.0134362","0.00000150677","0.00000385311","0.000627522","0.551521","0.43441"),
+                           time_diff = c(rep(4.12, 6), rep(0, 6)))
 tree_edges <- data.frame(patient_name = c("SAMPLE_PATIENT"), 
                          source = c("Root","1","1","6","5","3"), 
                          target = c("1","3","6","5","4","2"))

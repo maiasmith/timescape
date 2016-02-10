@@ -501,6 +501,38 @@ function _getGenotypeCPData(vizObj) {
     vizObj.data[vizObj.patient_id].genotype_cp = genotype_cp;
 }
 
+/* function to get the maximum timespan sum for all time spans in each patient
+* @param {Object} vizObj
+*/
+function _getMaxTimespanSum(vizObj) {
+
+    var max_timespan_sum = 0; // maximum sum of all timespans for each patient
+
+    // for each patient
+    vizObj.userConfig.patient_ids.forEach(function(patient_id) {
+
+        var timespan_sum = 0; // sum of all timespans for this patient
+        var cur_patient_prev = _.filter(vizObj.userConfig.clonal_prev, function(prev){ 
+            return prev.patient_name == patient_id; 
+        });
+        var tps = _.uniq(_.pluck(cur_patient_prev, "timepoint"));
+
+        // for each time point
+        tps.forEach(function(tp) {
+            var cur_tp_prev = _.filter(cur_patient_prev, function(prev) { 
+                return prev.timepoint == tp;
+            })
+            timespan_sum += (cur_tp_prev[0].timespan) ? cur_tp_prev[0].timespan : 0;
+        })
+
+        if (timespan_sum > max_timespan_sum) {
+            max_timespan_sum = timespan_sum;
+        }
+    });
+
+    return max_timespan_sum;
+}
+
 // LAYOUT FUNCTIONS
 
 /* function to get the layout of the timesweep, different depending on whether user wants centred,
@@ -1860,3 +1892,4 @@ function _sort2DArrByValue(obj)
 
     return first_elements; 
 }
+
