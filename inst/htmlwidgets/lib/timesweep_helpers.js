@@ -1303,8 +1303,12 @@ function _getTraditionalPaths(vizObj) {
         appear_xTop,
         event_occurs, // whether or not an event occurs after a time point
         event_index, // index of the current event 
-        perturbations = vizObj.userConfig.perturbations, // user specified perturbations in the time-series data
         frac; // fraction of total tumour content remaining at the perturbation event;
+
+    // user specified perturbations in the time-series data
+    var perturbations = _.filter(vizObj.userConfig.perturbations, function(perts){  
+        return perts.patient_name == vizObj.patient_id; 
+    });
 
     $.each(layoutOrder, function(gtype_idx, gtype) {
         
@@ -1666,9 +1670,13 @@ function _getColours(vizObj) {
         alpha_colour_assignment = {}, // alpha colour assignment
         patient_id = vizObj.patient_id;
 
+    var cur_colours = _.filter(x.clone_cols, function(cols){ 
+            return cols.patient_name == patient_id; 
+        });
+
     // get colour assignment based on tree hierarchy
-    // --> if unspecified, use default
-    if (x.clone_cols == "NA") {
+    // --> if all patients have unspecified colours, or just this patient, use default
+    if (cur_colours == "NA" || cur_colours.length == 0) {
         var colour_palette = _getColourPalette();
         var chains = _getLinearTreeSegments(vizObj.data[patient_id].treeStructure, {}, "");
         colour_assignment = _colourTree(vizObj, chains, vizObj.data[patient_id].treeStructure, colour_palette, {}, "Greens");
@@ -1676,7 +1684,7 @@ function _getColours(vizObj) {
     // --> otherwise, use specified colours
     else {
         // handling different inputs -- TODO should probably be done in R
-        x.clone_cols.forEach(function(col, col_idx) {
+        cur_colours.forEach(function(col, col_idx) {
             var col_value = col.colour;
             if (col_value[0] != "#") { // append a hashtag if necessary
                 col_value = "#".concat(col_value);

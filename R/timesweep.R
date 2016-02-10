@@ -17,8 +17,9 @@
 #'                   source = c("Root","1","1","6","5","3"), 
 #'                   target = c("1","3","6","5","4","2"))
 #' @param clone_colours Data frame with clone ids and their corresponding colours 
-#'   Format: columns are (1) {String} "clone_id" - the clone ids
-#'                       (2) {String} "colour" - the corresponding Hex colour for each clone id.
+#'   Format: columns are (1) {String} "patient_name" - patient name
+#'                       (2) {String} "clone_id" - the clone ids
+#'                       (3) {String} "colour" - the corresponding Hex colour for each clone id.
 #'   e.g. data.frame(clone_id = c("1","2","3","4","5","6"), 
 #'                    colour = c("F8766D66", "A3A50066", "00BF7D66", "00B0F666", "E76BF366", "B79F0066"))
 #' @param xaxis_title x-axis title. 
@@ -31,10 +32,11 @@
 #' @param show_root Whether (TRUE) or not (FALSE) to show the root in the timesweep view.
 #' @param perturbations Data frame of any perturbations that occurred between two time points, 
 #'   and the fraction of total tumour content left.
-#'   Format: columns are (1) {String} "pert_name" - the perturbation name
-#'                       (2) {String} "prev_tp" - the time point (as labelled in clonal prevalence data) 
+#'   Format: columns are (1) {String} "patient_name" - patient name
+#'                       (2) {String} "pert_name" - the perturbation name
+#'                       (3) {String} "prev_tp" - the time point (as labelled in clonal prevalence data) 
 #'                                                BEFORE perturbation
-#'                       (3) {Number} "frac" - the fraction of total tumour content remaining at the 
+#'                       (4) {Number} "frac" - the fraction of total tumour content remaining at the 
 #'                                             time of perturbation, range [0, 1].
 #'   e.g. data.frame(pert_name = c("Chemo"), 
 #'                    prev_tp = c("T1"),
@@ -54,11 +56,13 @@
 #' tree_edges <- data.frame(patient_name = c("SAMPLE_PATIENT"), 
 #'                          source = c("Root","1","1","6","5","3"), 
 #'                          target = c("1","3","6","5","4","2"))
-#' clone_colours <- data.frame( clone_id = c("1","2","3","4","5","6"), 
+#' clone_colours <- data.frame( patient_name = c(rep("SAMPLE_PATIENT", 6)), 
+#'                              clone_id = c("1","2","3","4","5","6"), 
 #'                              colour = c("F8766D66", "B79F0066", "00BA3866", "00BFC466", "619CFF66", "F564E366"))
-#' perturbations <- data.frame( pert_name = c("Chemo"), 
+#' perturbations <- data.frame( patient_name = c("SAMPLE_PATIENT"),
+#'                              pert_name = c("Chemo"), 
 #'                              prev_tp = c("T1"),
-#'                               frac = c(0.1))
+#'                              frac = c(0.1))
 #' timesweep(clonal_prev = clonal_prev, tree_edges = tree_edges, clone_colours = clone_colours, perturbations = perturbations)
 timesweep <- function(clonal_prev, 
                       tree_edges, 
@@ -141,6 +145,7 @@ timesweep <- function(clonal_prev,
     stop(paste("Your tree edge and clonal prevalence data frames contain different patient names. ",
       "Please ensure the patient name is the same.", sep=""))
   }
+
   patients = unique(tree_edges$patient_name);
 
   # GENOTYPE POSITIONING
@@ -153,10 +158,11 @@ timesweep <- function(clonal_prev,
   if (is.data.frame(clone_colours)) {
 
     # ensure column names are correct
-    if (!("clone_id" %in% colnames(clone_colours)) ||
+    if (!("patient_name" %in% colnames(clone_colours)) ||
+        !("clone_id" %in% colnames(clone_colours)) ||
         !("colour" %in% colnames(clone_colours))) {
       stop(paste("Node colour data frame must have the following column names: ", 
-          "\"clone_id\", \"colour\"", sep=""))
+          "\"patient_name\", \"clone_id\", \"colour\"", sep=""))
     }
   }
 
@@ -164,11 +170,12 @@ timesweep <- function(clonal_prev,
   if (is.data.frame(perturbations)) {
 
     # ensure column names are correct
-    if (!("pert_name" %in% colnames(perturbations)) ||
+    if (!("patient_name" %in% colnames(perturbations)) ||
+        !("pert_name" %in% colnames(perturbations)) ||
         !("prev_tp" %in% colnames(perturbations)) ||
         !("frac" %in% colnames(perturbations))) {
       stop(paste("Perturbations data frame must have the following column names: ", 
-          "\"pert_name\", \"prev_tp\", \"frac\"", sep=""))
+          "\"patient_name\", \"pert_name\", \"prev_tp\", \"frac\"", sep=""))
     }
 
     # check that columns are of the correct type
