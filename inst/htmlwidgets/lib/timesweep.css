@@ -1,17 +1,20 @@
-ul, ol {
+ul {
     list-style: none;
+    -webkit-padding-start: 0px; /* override user agent stylesheet */
+}
+
+.timesweep {
+    overflow: scroll;
 }
 
 .yAxisTitleDIV {
-	margin-top:10px;
-	position: fixed;
-	left: 0;
+	position: relative;
+	float: left;
 }
 
 .xAxisTitleDIV {
-	position: fixed;
-	top: 0;
-	width: 100%;
+	position: relative;
+	left: 55px; /* 45 for y-axis, 10 for gridster left margin */
 }
 
 .axisTitle {

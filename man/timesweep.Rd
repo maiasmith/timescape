@@ -15,7 +15,7 @@ Format: columns are (1) {String} "patient_name" - patient name
                     (2) {String} "timepoint" - time point
                     (3) {String} "clone_id" - clone id
                     (4) {Number} "clonal_prev" - clonal prevalence.
-                    (5) (Optional) {Number} "time_diff" - time difference between the stated time point and 
+                    (5) (Optional) {Number} "timespan" - time difference between the stated time point and 
                                                           the following time point}
 
 \item{tree_edges}{Tree edges data frame. The root of the tree (id: "Root") must be specified as a source.
@@ -27,8 +27,9 @@ e.g. data.frame(patient_name = c("SAMPLE_PATIENT"),
                 target = c("1","3","6","5","4","2"))}
 
 \item{clone_colours}{Data frame with clone ids and their corresponding colours 
-Format: columns are (1) {String} "clone_id" - the clone ids
-                    (2) {String} "colour" - the corresponding Hex colour for each clone id.
+Format: columns are (1) {String} "patient_name" - patient name
+                    (2) {String} "clone_id" - the clone ids
+                    (3) {String} "colour" - the corresponding Hex colour for each clone id.
 e.g. data.frame(clone_id = c("1","2","3","4","5","6"), 
                  colour = c("F8766D66", "A3A50066", "00BF7D66", "00B0F666", "E76BF366", "B79F0066"))}
 
@@ -47,10 +48,11 @@ e.g. data.frame(clone_id = c("1","2","3","4","5","6"),
 
 \item{perturbations}{Data frame of any perturbations that occurred between two time points, 
 and the fraction of total tumour content left.
-Format: columns are (1) {String} "pert_name" - the perturbation name
-                    (2) {String} "prev_tp" - the time point (as labelled in clonal prevalence data) 
+Format: columns are (1) {String} "patient_name" - patient name
+                    (2) {String} "pert_name" - the perturbation name
+                    (3) {String} "prev_tp" - the time point (as labelled in clonal prevalence data) 
                                              BEFORE perturbation
-                    (3) {Number} "frac" - the fraction of total tumour content remaining at the 
+                    (4) {Number} "frac" - the fraction of total tumour content remaining at the 
                                           time of perturbation, range [0, 1].
 e.g. data.frame(pert_name = c("Chemo"), 
                  prev_tp = c("T1"),
@@ -72,15 +74,17 @@ clonal_prev <- data.frame( patient_name = c("SAMPLE_PATIENT"),
                            clone_id = c("1","6","5","4","3","2","1","6","5","4","3","2"),
                            clonal_prev = c("0.0205127","0.284957","0.637239","0.0477972","0.00404099","0.00545235",
                                            "0.0134362","0.00000150677","0.00000385311","0.000627522","0.551521","0.43441"),
-                           time_diff = c(rep(4.12, 6), rep(0, 6)))
+                           timespan = c(rep(4.12, 6), rep(0, 6)))
 tree_edges <- data.frame(patient_name = c("SAMPLE_PATIENT"), 
                          source = c("Root","1","1","6","5","3"), 
                          target = c("1","3","6","5","4","2"))
-clone_colours <- data.frame( clone_id = c("1","2","3","4","5","6"), 
+clone_colours <- data.frame( patient_name = c(rep("SAMPLE_PATIENT", 6)), 
+                             clone_id = c("1","2","3","4","5","6"), 
                              colour = c("F8766D66", "B79F0066", "00BA3866", "00BFC466", "619CFF66", "F564E366"))
-perturbations <- data.frame( pert_name = c("Chemo"), 
+perturbations <- data.frame( patient_name = c("SAMPLE_PATIENT"),
+                             pert_name = c("Chemo"), 
                              prev_tp = c("T1"),
-                              frac = c(0.1))
+                             frac = c(0.1))
 timesweep(clonal_prev = clonal_prev, tree_edges = tree_edges, clone_colours = clone_colours, perturbations = perturbations)
 }
 

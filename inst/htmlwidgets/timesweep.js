@@ -14,7 +14,7 @@ HTMLWidgets.widget({
         treeHeight: 100,
         treeWidth: 100,
         xAxisTitleDIVHeight: 45, // height of the x axis title DIV
-        yAxisTitleDIVHeight: 30, // height of the y axis title DIV
+        yAxisTitleDIVHeight: 45, // height of the y axis title DIV
         smallMargin: 5,
         widgetMargin: 10, // marging between widgets
         transitionSpeed: 200,
@@ -42,7 +42,7 @@ HTMLWidgets.widget({
     vizObj.generalConfig = config;
     var dim = vizObj.generalConfig;
 
-    dim.width = width;
+    dim.width = width - dim.xAxisTitleDIVHeight-30;
     dim.height = height;
 
     return {}
@@ -52,6 +52,7 @@ HTMLWidgets.widget({
   renderValue: function(el, x, instance) {
 
     var dim = vizObj.generalConfig;
+
 
     // PARAMETERS
 
@@ -70,8 +71,9 @@ HTMLWidgets.widget({
     dim.tsSVGHeight = dim.canvasSVGHeight;
     dim.tsSVGWidth = dim.canvasSVGWidth - dim.padding - dim.legendWidth - dim.treeWidth - dim.patientTabWidth;
     dim.xAxisWidth = dim.tsSVGWidth;
-    dim.gridHeight = dim.canvasSVGHeight + dim.padding*2;
-    dim.gridWidth = dim.canvasSVGWidth + dim.padding*2;
+    dim.gridCellHeight = dim.canvasSVGHeight + dim.padding*2;
+    dim.gridCellWidth = dim.canvasSVGWidth + dim.padding*2;
+    dim.gridHeight = dim.gridCellHeight*numPatients + dim.widgetMargin*2*(numPatients-1); 
 
 
     // SET UP BODY
@@ -85,6 +87,7 @@ HTMLWidgets.widget({
     var containerDIV = d3.select(el)
         .append("div")
         .attr("class", "containerDIV")
+        .style("position", "relative")
         .style("width", dim.width)
         .style("height", dim.height);
 
@@ -94,25 +97,17 @@ HTMLWidgets.widget({
     var xAxisTitleDIV = d3.select(".containerDIV")
         .append("div")
         .attr("class", "xAxisTitleDIV")
-        .style("height", dim.xAxisTitleDIVHeight);
+        .style("height", dim.xAxisTitleDIVHeight + "px");
 
     var xAxisTitleSVG = xAxisTitleDIV.append("svg:svg")
         .attr("height", dim.xAxisTitleDIVHeight)
         .attr("width", dim.width);
 
     // plot x-axis title
-    xAxisTitleSVG.append("rect")
-        .attr("x", dim.padding)
-        .attr("y", 0)
-        .attr("height", dim.xAxisTitleDIVHeight)
-        .attr("width", dim.tsSVGWidth)
-        .attr("fill", dim.backgroundColour)
-        .attr("stroke", dim.backgroundColour);
-
     xAxisTitleSVG.append('text')
         .attr('class', 'axisTitle xAxis')
         .attr('x', dim.padding + dim.xAxisWidth/2)
-        .attr('y', dim.xAxisTitleDIVHeight - dim.smallMargin)
+        .attr('y', dim.xAxisTitleDIVHeight)
         .text(function() { 
             return x.xaxis_title;
         });
@@ -120,10 +115,10 @@ HTMLWidgets.widget({
     var yAxisTitleDIV = d3.select(".containerDIV")
         .append("div")
         .attr("class", "yAxisTitleDIV")
-        .style("height", window.innerHeight);
+        .style("height", dim.gridHeight + "px");
 
     var yAxisTitleSVG = yAxisTitleDIV.append("svg:svg")
-        .attr("height", window.innerHeight)
+        .attr("height", dim.gridHeight)
         .attr("width", dim.xAxisTitleDIVHeight);
 
     // plot y-axis title
@@ -131,8 +126,7 @@ HTMLWidgets.widget({
         .attr('class', 'axisTitle yAxis')
         .attr('x', 0)
         .attr('y', 0)
-        .attr('transform', "translate(" + (dim.yAxisTitleDIVHeight) + ", " + 
-            ((dim.gridHeight*numPatients + dim.widgetMargin*(numPatients-1))/2) + ") rotate(-90)")
+        .attr('transform', "translate(" + (dim.yAxisTitleDIVHeight) + ", " + (dim.gridHeight/2) + ") rotate(-90)")
         .text(function() { 
             return x.yaxis_title;
         });
@@ -142,13 +136,12 @@ HTMLWidgets.widget({
 
     var gridster_ul = d3.select(".containerDIV") // unordered list
         .append("div")
-        // .style("z-index", -1)
-        .style("height", dim.height)
-        .style("width", dim.width)
         .attr("class", "gridster")
-        .append("ul")        
-        .style("height", dim.height)
-        .style("width", dim.width);
+        .style("float", "left")
+        .style("height", dim.height + "px")
+        .style("width", dim.width + "px")
+        .append("ul")    
+        .style("float", "left"); 
 
     gridster_ul.selectAll("li")
         .data(vizObj.userConfig.patient_ids)
@@ -161,9 +154,9 @@ HTMLWidgets.widget({
 
     // initialize grid
     $(".gridster ul").gridster({
-        widget_margins: [0, dim.widgetMargin],
-        widget_base_dimensions: [dim.gridWidth, 
-                                 dim.gridHeight],
+        widget_margins: [dim.widgetMargin, dim.widgetMargin],
+        widget_base_dimensions: [dim.gridCellWidth, 
+                                 dim.gridCellHeight],
         max_cols: 1
     });
 
@@ -186,8 +179,8 @@ HTMLWidgets.widget({
             .attr("class", "gridSVG_" + patient_id)
             .attr("x", 0)
             .attr("y", 0) 
-            .attr("width", dim.gridWidth) 
-            .attr("height", dim.gridHeight);
+            .attr("width", dim.gridCellWidth) 
+            .attr("height", dim.gridCellHeight);
 
         var canvasSVG = d3.select(".gridSVG_" + patient_id) 
             .append("g")
@@ -247,7 +240,7 @@ HTMLWidgets.widget({
             + dim.treeWidth + dim.padding;
         patientTabG.append("rect")
             .attr("width", dim.patientTabWidth)
-            .attr("height", dim.gridHeight)
+            .attr("height", dim.gridCellHeight)
             .attr("x", spaceBeforePatientTab)
             .attr("y", 0)
             .attr("fill", "#ABAAAA")
@@ -260,7 +253,7 @@ HTMLWidgets.widget({
             .attr("dy", "0.35em")
             .attr("transform", "translate(" 
                 + (spaceBeforePatientTab + dim.patientTabWidth/2) + "," 
-                + dim.gridHeight/2 + ") rotate(-90)")
+                + dim.gridCellHeight/2 + ") rotate(-90)")
             .attr("fill", "white")
             .text(patient_id);
 
@@ -269,9 +262,6 @@ HTMLWidgets.widget({
 
         // extract all info from tree about nodes, edges, ancestors, descendants
         _getTreeInfo(vizObj);
-
-        console.log("vizObj.userConfig.clonal_prev");
-        console.log(vizObj.userConfig.clonal_prev);
 
         // get timepoints, prepend a "T0" timepoint to represent the timepoint before any data originated
         var cur_clonal_prev = _.filter(vizObj.userConfig.clonal_prev, function(prev){ // CP data for this patient
