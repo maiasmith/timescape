@@ -76,13 +76,14 @@ HTMLWidgets.widget({
     dim.gridHeight = dim.gridCellHeight*numPatients + dim.widgetMargin*2*(numPatients-1); 
 
 
-    // SET UP BODY
+    // SET UP VIEW
+    var view_id = el.id;
+    vizObj.view_id = view_id;
 
     // CONTAINER DIV
-    var random_id = _makeid();
     var containerDIV = d3.select(el)
         .append("div")
-        .attr("class", "containerDIV_" + random_id)
+        .attr("class", "containerDIV")
         .style("position", "relative")
         .style("width", dim.width)
         .style("height", dim.height);
@@ -90,8 +91,7 @@ HTMLWidgets.widget({
 
     // STATIC DIVS
 
-    var xAxisTitleDIV = d3.select(".containerDIV_" + random_id)
-        .append("div")
+    var xAxisTitleDIV = containerDIV.append("div")
         .attr("class", "xAxisTitleDIV")
         .style("height", dim.xAxisTitleDIVHeight + "px")
         .style("width", (dim.padding*2 + dim.xAxisWidth) + "px");
@@ -109,8 +109,7 @@ HTMLWidgets.widget({
             return x.xaxis_title;
         });
 
-    var yAxisTitleDIV = d3.select(".containerDIV_" + random_id)
-        .append("div")
+    var yAxisTitleDIV = containerDIV.append("div")
         .attr("class", "yAxisTitleDIV")
         .style("height", dim.gridHeight + "px");
 
@@ -131,8 +130,7 @@ HTMLWidgets.widget({
 
     // GRIDSTER
 
-    var gridster_ul = d3.select(".containerDIV_" + random_id) // unordered list
-        .append("div")
+    var gridster_ul = containerDIV.append("div") // unordered list
         .attr("class", "gridster")
         .style("float", "left")
         .style("height", dim.gridHeight + "px")
@@ -170,50 +168,43 @@ HTMLWidgets.widget({
         vizObj.patient_id = patient_id;
         vizObj.view[patient_id] = {};
         vizObj.data[patient_id] = {};
+        var patient_view = d3.select("#" + view_id).select(".grid_" + patient_id);
 
-        var gridSVG = d3.select(".grid_" + patient_id)
+        var gridSVG = gridster_ul.select(".grid_" + patient_id)
             .append("svg:svg")
-            .attr("class", "gridSVG_" + patient_id)
+            .attr("class", "gridSVG")
             .attr("x", 0)
             .attr("y", 0) 
             .attr("width", dim.gridCellWidth) 
             .attr("height", dim.gridCellHeight);
 
-        var canvasSVG = d3.select(".gridSVG_" + patient_id) 
-            .append("g")
-            .attr("class", "canvasSVG_" + patient_id)
-            .attr("transform", "translate(" + dim.padding + "," + 
-                dim.padding + ")");
+        var canvasSVG = gridSVG.append("g")
+            .attr("class", "canvasSVG")
+            .attr("transform", "translate(" + dim.padding + "," + dim.padding + ")");
 
-        var tsSVG = d3.select(".canvasSVG_" + patient_id)
-            .append("g")  
-            .attr("class", "tsSVG_" + patient_id);
+        var tsSVG = canvasSVG.append("g")  
+            .attr("class", "tsSVG");
 
-        var yAxisSVG = d3.select(".canvasSVG_" + patient_id) 
-            .append("g") 
-            .attr("class", "yAxisSVG_" + patient_id)      
+        var yAxisSVG = canvasSVG.append("g") 
+            .attr("class", "yAxisSVG")      
             .attr("transform", "translate(" + 0 + "," + 0 + ")");
 
-        var xAxisSVG = d3.select(".gridSVG_" + patient_id) 
-            .append("g") 
-            .attr("class", "xAxisSVG_" + patient_id)
+        var xAxisSVG = gridSVG.append("g") 
+            .attr("class", "xAxisSVG")
             .attr("transform", "translate(" + dim.padding + ",0)");
 
-        var tsLegendSVG = d3.select(".canvasSVG_" + patient_id)
-            .append("g") 
-            .attr("class", "tsLegendSVG_" + patient_id)
+        var tsLegendSVG = canvasSVG.append("g") 
+            .attr("class", "tsLegendSVG")
             .attr("transform", "translate(" + (dim.tsSVGWidth + dim.padding) + ",0)");
 
-        var tsTree = d3.select(".canvasSVG_" + patient_id)
-            .append("g") 
-            .attr("class", "tsTreeSVG_" + patient_id)
+        var tsTree = canvasSVG.append("g") 
+            .attr("class", "tsTreeSVG")
             .attr("transform", "translate(" + 
             (dim.tsSVGWidth + dim.padding + dim.legendWidth) + ",0)");
 
         // move the switch SVG down by the height of the legend + height of the tree
-        var tsSwitch = d3.select(".canvasSVG_" + patient_id)
-            .append("g") 
-            .attr("class", "tsSwitchSVG_" + patient_id)
+        var tsSwitch = canvasSVG.append("g") 
+            .attr("class", "tsSwitchSVG")
             .attr("transform", "translate(" + (dim.tsSVGWidth + dim.padding) + "," + (dim.tsSVGHeight - 25) + ")");
 
         vizObj.view[patient_id].gridSVG = gridSVG;
@@ -293,25 +284,33 @@ HTMLWidgets.widget({
         // get colour scheme
         _getColours(vizObj);
         var colour_assignment = vizObj.view[patient_id].colour_assignment,
-            alpha_colour_assignment = vizObj.view[patient_id].alpha_colour_assignment;
+            alpha_colour_assignment = vizObj.view[patient_id].alpha_colour_assignment,
+            greyscale_assignment = vizObj.view[patient_id].greyscale_assignment,
+            alpha_greyscale_assignment = vizObj.view[patient_id].alpha_greyscale_assignment;
 
         // plot timesweep data
-        var patientID_class = 'patientID_' + patient_id;
         vizObj.view[patient_id].tsSVG
             .selectAll('.tsPlot')
-            .data(vizObj.data[patient_id].bezier_paths, function(d) {
+            .data(vizObj.data[patient_id].all_bezier_paths, function(d) {
+                d.col = colour_assignment[d.gtype];
+                d.alpha_col = alpha_colour_assignment[d.gtype];
+                d.grey = greyscale_assignment[d.gtype];
+                d.alpha_grey = alpha_greyscale_assignment[d.gtype];
+                d.show_root = vizObj.userConfig.show_root;
+                d.root_colour = dim.rootColour;
+                d.alpha = vizObj.userConfig.alpha;
                 return d.gtype;
             })
             .enter().append('path')
-            .attr('class', function() { return 'tsPlot ' + patientID_class; })
-            .attr('d', function(d) { return d.path; })
+            .attr('class', 'tsPlot')
+            .attr('d', function(d) { return d.traditional_path; })
             .attr('fill', function(d) { 
-                return (x.alpha == "NA") ? colour_assignment[d.gtype] : alpha_colour_assignment[d.gtype];
+                return (x.alpha == "NA") ? d.col : d.alpha_col;
             }) 
             .attr('stroke', function(d) { 
                 return (d.gtype == "Root" && vizObj.userConfig.show_root) ? 
                     dim.rootColour : 
-                    colour_assignment[d.gtype]; 
+                    d.col; 
             })
             .attr('fill-opacity', function(d) {
                 return (d.gtype == "Root" && !vizObj.userConfig.show_root) ? 0 : 1;
@@ -320,10 +319,10 @@ HTMLWidgets.widget({
                 return (d.gtype == "Root" && !vizObj.userConfig.show_root) ? 0 : 1;
             })
             .on('mouseover', function(d) {
-                return _gtypeMouseover(vizObj, d.gtype, patient_id);
+                return _gtypeMouseover(patient_view, d.gtype);
             })
             .on('mouseout', function(d) {
-                return _gtypeMouseout(vizObj, d.gtype, patient_id)
+                return _gtypeMouseout(patient_view, d.gtype);
             });
 
         // plot time point guides
@@ -331,7 +330,7 @@ HTMLWidgets.widget({
             .selectAll('.tpGuide')
             .data(vizObj.data[patient_id].timepoints)
             .enter().append('line')
-            .attr('class', function(d) { return 'tpGuide tp_' + d + ' ' + patientID_class; })
+            .attr('class', function(d) { return 'tpGuide tp_' + d; })
             .attr('x1', function(d, i) { return (i / (vizObj.data[patient_id].timepoints.length - 1)) * dim.tsSVGWidth; })
             .attr('x2', function(d, i) { return (i / (vizObj.data[patient_id].timepoints.length - 1)) * dim.tsSVGWidth; })
             .attr('y1', 0)
@@ -354,9 +353,9 @@ HTMLWidgets.widget({
             .append('circle')
             .attr('class', function(d) { 
                 if (d.type == "traditional") {
-                    return 'labelCirc tp_' + d.tp + ' gtype_' + d.gtype + ' ' + patientID_class; 
+                    return 'labelCirc tp_' + d.tp + ' gtype_' + d.gtype; 
                 }
-                return 'sepLabelCirc tp_' + d.tp + ' gtype_' + d.gtype + ' ' + patientID_class; 
+                return 'sepLabelCirc tp_' + d.tp + ' gtype_' + d.gtype; 
             }) 
             .attr('cx', function(d) { 
 
@@ -399,9 +398,9 @@ HTMLWidgets.widget({
             .attr('font-size', dim.fontSize)
             .attr('class', function(d) { 
                 if (d.type == "traditional") {
-                    return 'label tp_' + d.tp + ' gtype_' + d.gtype + ' ' + patientID_class; 
+                    return 'label tp_' + d.tp + ' gtype_' + d.gtype; 
                 }
-                return 'sepLabel tp_' + d.tp + ' gtype_' + d.gtype + ' ' + patientID_class; 
+                return 'sepLabel tp_' + d.tp + ' gtype_' + d.gtype; 
             }) 
             .text(function(d) {
                 var cp = (Math.round(d.cp * 100) / 1);
@@ -464,10 +463,10 @@ HTMLWidgets.widget({
             .attr('dy', '.71em')
             .text(function(d) { return d.pert_name; })
             .on('mouseover', function(d) {
-                d3.selectAll(".pertGuide.pert_" + d.pert_name + '.' + patientID_class).attr('stroke-opacity', 1); 
+                vizObj.view[patient_id].tsSVG.selectAll(".pertGuide.pert_" + d.pert_name).attr('stroke-opacity', 1); 
             })
             .on('mouseout', function(d) {
-                d3.selectAll(".pertGuide.pert_" + d.pert_name + '.' + patientID_class).attr('stroke-opacity', 0);
+                vizObj.view[patient_id].tsSVG.selectAll(".pertGuide.pert_" + d.pert_name).attr('stroke-opacity', 0);
             });
 
         // plot guides
@@ -475,7 +474,7 @@ HTMLWidgets.widget({
             .selectAll('.pertGuide')
             .data(vizObj.userConfig.perturbations)
             .enter().append('line')
-            .attr('class', function(d) { return 'pertGuide pert_' + d.pert_name + ' ' + patientID_class; })
+            .attr('class', function(d) { return 'pertGuide pert_' + d.pert_name; })
             .attr('x1', function(d) { 
                 var prevTP_idx = vizObj.data[patient_id].timepoints.indexOf(d.prev_tp);
                 return ((prevTP_idx + 0.5) / (vizObj.data[patient_id].timepoints.length-1)) * (dim.tsSVGWidth); 
@@ -506,11 +505,11 @@ HTMLWidgets.widget({
             .attr('y', dim.padding - dim.smallMargin)
             .text(function(d) { return d; })
             .on('mouseover', function(d) {
-                d3.selectAll(".tpGuide.tp_" + d + '.' + patientID_class).attr('stroke-opacity', 1); 
+                vizObj.view[patient_id].tsSVG.selectAll(".tpGuide.tp_" + d).attr('stroke-opacity', 1); 
                 
             })
             .on('mouseout', function(d) {
-                d3.selectAll(".tpGuide.tp_" + d + '.' + patientID_class).attr('stroke-opacity', 0);
+                vizObj.view[patient_id].tsSVG.selectAll(".tpGuide.tp_" + d).attr('stroke-opacity', 0);
             });      
         
 
@@ -530,10 +529,10 @@ HTMLWidgets.widget({
             .attr('fill', function(d) { return alpha_colour_assignment[d]; })
             .attr('stroke', function(d) { return colour_assignment[d]; })
             .on('mouseover', function(d) {
-                return _gtypeMouseover(vizObj, d, patient_id);
+                return _gtypeMouseover(patient_view, d);
             })
             .on('mouseout', function(d) {
-                return _gtypeMouseout(vizObj, d, patient_id)
+                return _gtypeMouseout(patient_view, d);
             });
 
         // plot legend text
@@ -564,7 +563,7 @@ HTMLWidgets.widget({
         // PLOT TREE GLYPH
 
         // plot tree title
-        vizObj.view[patient_id].tsTree
+        var treeTitle = vizObj.view[patient_id].tsTree
             .append('text')
             .attr('class', 'treeTitle')
             .attr('x', 0)
@@ -574,7 +573,7 @@ HTMLWidgets.widget({
 
         // d3 tree layout
         var treePadding = 10,
-            treeTitleHeight = d3.select('.treeTitle').node().getBBox().height,
+            treeTitleHeight = treeTitle.node().getBBox().height,
             treeLayout = d3.layout.tree()           
                 .size([dim.treeHeight - treePadding - treeTitleHeight, dim.treeWidth - treePadding]); 
 
@@ -619,10 +618,10 @@ HTMLWidgets.widget({
             .attr("id", function(d) { return d.sc_id; })
             .attr("r", 4)
             .on('mouseover', function(d) {
-                return _gtypeMouseover(vizObj, d.id, patient_id);
+                return _gtypeMouseover(patient_view, d.id);
             })
             .on('mouseout', function(d) {
-                return _gtypeMouseout(vizObj, d.id, patient_id)
+                return _gtypeMouseout(patient_view, d.id);
             });
 
         // SWITCH between traditional and tracks views
@@ -635,7 +634,7 @@ HTMLWidgets.widget({
             .attr('width', 50)
             .attr('height', 20)
             .append("xhtml:body")
-            .html("<input type=\"checkbox\" class=\"" + patient_id + "\">");
+            .html("<input type=\"checkbox\" id=\"true\">");
 
         // checkbox text
         vizObj.view[patient_id].tsSwitch
@@ -646,8 +645,8 @@ HTMLWidgets.widget({
             .text("Tracks View")
 
         // when checkbox selected, change view
-        d3.select("input." + patient_id).on("change", function() {
-            _switchView(vizObj, patient_id);
+        vizObj.view[patient_id].tsSwitch.select("input").on("change", function() {
+            _switchView(patient_view, this);
         });
 
     })
@@ -655,205 +654,6 @@ HTMLWidgets.widget({
   },
 
   resize: function(el, width, height, instance) {
-
-    // var dim = vizObj.generalConfig;
-
-    // dim.width = width;
-    // dim.height = height;
-    // dim.canvasSVGWidth = width - dim.padding - dim.padding;
-    // dim.canvasSVGHeight = height - dim.padding - dim.padding;
-    // dim.tsSVGHeight = dim.canvasSVGHeight - dim.xAxisHeight - dim.smallMargin;
-    // dim.tsSVGWidth = dim.canvasSVGWidth - dim.legendWidth - dim.yAxisWidth - dim.smallMargin - dim.padding;
-    // dim.xAxisWidth = dim.tsSVGWidth;
-    // dim.yAxisHeight = dim.tsSVGHeight;
-
-    // var canvasSVG = d3.select(".canvasSVG")
-    //     .attr("width", dim.canvasSVGWidth) 
-    //     .attr("height", dim.canvasSVGHeight);
-
-    // var xAxisSVG = d3.select(".xAxisSVG")    
-    //     .attr("transform", "translate(" + 0 + "," + (dim.tsSVGHeight + dim.smallMargin) + ")");
-
-    // var tsLegendSVG = d3.select(".tsLegendSVG")
-    //     .attr("transform", "translate(" + 
-    //         (dim.yAxisWidth + dim.smallMargin + dim.tsSVGWidth + dim.padding) + "," + 
-    //         0 + ")");
-
-    // // move the tree SVG down by the height of the legend
-    // // 25 for legend title and space
-    // var legendHeight = vizObj.data[patient_id].treeNodes.length * dim.legendGtypeHeight + 25 + 25; 
-    // vizObj.view[patient_id].tsTree.attr("transform", "translate(" + 
-    //     (dim.yAxisWidth + dim.smallMargin + dim.tsSVGWidth + dim.padding) + "," + 
-    //     legendHeight + ")");
-
-    // // move the switch SVG down by the height of the legend + height of the tree
-    // vizObj.view[patient_id].tsSwitch.attr("transform", "translate(" + 
-    //     (dim.yAxisWidth + dim.smallMargin + dim.tsSVGWidth + dim.padding) + "," + 
-    //     (dim.tsSVGHeight - 25) + ")");
-    
-    // // SET CONTENT
-
-    // // if we want the spaced stacked view, recalculate the layout
-    // var deferred = new $.Deferred();
-    // if (!vizObj.userConfig.genotype_position) {
-    //     // get the layout of genotypes at each time point
-    //     _getLayout(vizObj, vizObj.userConfig.genotype_position);
-
-    //     // in the layout, shift x-values if >1 genotype emerges at the 
-    //     // same time point from the same clade in the tree
-    //     _shiftEmergence(vizObj)
-        
-    //     // convert layout at each time point into a list of moves for each genotype's d3 path object
-    //     vizObj.data[patient_id].traditional_paths = _getTraditionalPaths(vizObj);
-
-    //     // get cellular prevalence labels
-    //     vizObj.data[patient_id].ts_trad_labels = _getTraditionalCPLabels(vizObj);
-    // }
-
-    // // get traditional bezier paths
-    // vizObj.data[patient_id].bezier_paths = _getBezierPaths(vizObj.data[patient_id].traditional_paths, dim.tsSVGWidth, dim.tsSVGHeight);
-
-    // // get tracks bezier paths
-    // vizObj.data[patient_id].tracks_bezier_paths = _getBezierPaths(vizObj.data[patient_id].tracks_paths, dim.tsSVGWidth, dim.tsSVGHeight);
-
-    // // plot timesweep data
-    // var newTsPlot;
-
-    // if (dim.switchView) {
-    //     newTsPlot = d3.selectAll('.tsPlot')
-    //         .data(vizObj.data[patient_id].bezier_paths, function(d) {
-    //             return d.gtype;
-    //         });
-    // } else {
-    //     newTsPlot = d3.selectAll('.tsPlot')
-    //         .data(vizObj.data[patient_id].tracks_bezier_paths, function(d) {
-    //             return d.gtype;
-    //         });
-    // }
-    // newTsPlot.enter().append('path');
-    // newTsPlot.exit().remove();
-    // newTsPlot
-    //     .attr('d', function(d) { return d.path});
-
-    // // plot time point guides
-    // d3.selectAll('.tpGuide')
-    //     .attr('x1', function(d, i) { return (i / (vizObj.data[patient_id].timepoints.length - 1)) * dim.tsSVGWidth; })
-    //     .attr('x2', function(d, i) { return (i / (vizObj.data[patient_id].timepoints.length - 1)) * dim.tsSVGWidth; })
-    //     .attr('y2', dim.tsSVGHeight);
-
-    // // adjust cellular prevalence label (and background) positioning
-    // d3.selectAll('.labelCirc, .sepLabelCirc')
-    //     .attr('cx', function(d) { 
-
-    //         // index of this time point relative to others
-    //         var index = vizObj.data[patient_id].timepoints.indexOf(d.tp); 
-
-    //         var x_val = (index / (vizObj.data[patient_id].timepoints.length-1)) * (dim.tsSVGWidth);
-
-    //         // if the time point is the last
-    //         if (index == vizObj.data[patient_id].timepoints.length - 1) {
-    //             // shift it to the left
-    //             x_val -= dim.circleR;
-    //         }
-
-    //         return x_val; 
-    //     })
-    //     .attr('cy', function(d) { 
-    //         // if the label, when centered vertically...
-    //         // ... is cut off at the top, shift down
-    //         if (((dim.tsSVGHeight-(d.middle*dim.tsSVGHeight)) + ((d.cp/2)*dim.tsSVGHeight)) < dim.circleR) {
-    //             return 1 + dim.circleR;
-    //         }
-
-    //         // ... is cut off at the bottom, shift up
-    //         else if (((d.middle*dim.tsSVGHeight) + ((d.cp/2)*dim.tsSVGHeight)) < dim.circleR) {
-    //             return dim.tsSVGHeight - 1 - dim.circleR;
-    //         }
-
-    //         // ... is not cut off, center vertically
-    //         return (1 - d.middle)*dim.tsSVGHeight; 
-    //     });
-
-    // d3.selectAll('.label, .sepLabel')
-    //     .attr('x', function(d) { 
-
-    //         // index of this time point relative to others
-    //         var index = vizObj.data[patient_id].timepoints.indexOf(d.tp); 
-
-    //         var x_val = (index / (vizObj.data[patient_id].timepoints.length-1)) * (dim.tsSVGWidth);
-
-    //         // if the time point is the last
-    //         if (index == vizObj.data[patient_id].timepoints.length - 1) {
-    //             // shift it to the left
-    //             x_val -= dim.circleR;
-    //         }
-
-    //         return x_val; 
-    //     })
-    //     .attr('y', function(d) { return (1 - d.middle)*dim.tsSVGHeight; })
-    //     .attr('dy', function(d) {
-
-    //         if (d.type == "traditional") {
-    //             // if the label, when centered vertically...
-    //             // ... is cut off at the top, shift down
-    //             if (((dim.tsSVGHeight-(d.middle*dim.tsSVGHeight)) + ((d.cp/2)*dim.tsSVGHeight)) < dim.circleR) {
-    //                 d3.select(this).attr('y', 1 + dim.circleR);
-    //             }
-
-    //             // ... is cut off at the bottom, shift up
-    //             else if (((d.middle*dim.tsSVGHeight) + ((d.cp/2)*dim.tsSVGHeight)) < dim.circleR) {
-    //                 d3.select(this).attr('y', dim.tsSVGHeight - 1 - dim.circleR);
-    //             }
-
-    //             // ... is not cut off, center vertically
-    //             return '.35em';
-    //         }
-    //         else {
-    //             // if the label, when centered vertically...
-    //             // ... is cut off at the top, shift down
-    //             if (((dim.tsSVGHeight-(d.top*dim.tsSVGHeight)) + ((d.cp/2)*dim.tsSVGHeight)) < dim.circleR) {
-    //                 d3.select(this).attr('y', '1px');
-    //                 return '.71em';
-    //             }
-
-    //             // ... is cut off at the bottom, shift up
-    //             else if (((d.bottom*dim.tsSVGHeight) + ((d.cp/2)*dim.tsSVGHeight)) < dim.circleR) {
-    //                 d3.select(this).attr('y', dim.tsSVGHeight);
-    //                 return '-1px';
-    //             }
-
-    //             // ... is not cut off, center vertically
-    //             return '.35em';
-    //         }
-
-    //     })
-    //     .attr('fill', 'black')
-    //     .attr('opacity', 0)
-    //     .attr('text-anchor', 'middle')
-    //     .style('pointer-events', 'none');
-
-
-    // // PLOT AXES
-
-    // // plot x-axis labels
-    // d3.selectAll('.xAxisLabels')
-    //     .attr('x', function(d, i) { 
-    //         return (i / (vizObj.data[patient_id].timepoints.length-1)) * (dim.tsSVGWidth) + dim.smallMargin + dim.yAxisWidth; 
-    //     });
-
-    // // plot y-axis title
-    // d3.select('.axisTitle.yAxis')
-    //     .attr('x', 0)
-    //     .attr('y', 0)
-    //     .transition()
-    //     .duration(300)
-    //     .attr('transform', function() {
-    //         return "translate(" + (dim.yAxisWidth/2) + ", " + (dim.tsSVGHeight/2) + ") rotate(-90)";
-    //     });
-
-    // // plot x-axis title
-    // d3.select('.axisTitle.xAxis')
-    //     .attr('x', dim.yAxisWidth + dim.smallMargin + dim.xAxisWidth/2);
    
     return {}
     

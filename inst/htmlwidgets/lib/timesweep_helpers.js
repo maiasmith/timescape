@@ -3,195 +3,149 @@
 // d3 EFFECTS FUNCTIONS
 
 /* function to switch between traditional and tracks view
-* @param {Object} vizObj
-* @param {String} gtype -- the current genotype being moused over
-* @param {String} patient_id -- id of patient
+* @param {Object} view -- current htmlwidget view for this patient, accessed by selecting htmlwidget id
+* @param {Object} checkbox -- the checkbox DOM 
 */
-function _switchView(vizObj, patient_id) {
-    var dim = vizObj.generalConfig,
-        colour_assignment = vizObj.view[patient_id].colour_assignment,
-        alpha_colour_assignment = vizObj.view[patient_id].alpha_colour_assignment,
-        x = vizObj.userConfig;
+function _switchView(view, checkbox) {
 
     // hide any cellular prevalence labels
-    d3.selectAll(".label, .sepLabel")
+    view
+        .selectAll(".label, .sepLabel")
         .attr('opacity', 0);
-    d3.selectAll(".labelCirc, .sepLabelCirc")
+    view
+        .selectAll(".labelCirc, .sepLabelCirc")
         .attr('fill-opacity', 0);
 
     // transition to tracks timesweep view
-    if (dim.switchView) {
-        var sweeps = vizObj.view[patient_id].tsSVG
+    if (checkbox.id == "true") {
+        var sweeps = view
             .selectAll('.tsPlot')
-            .data(vizObj.data[patient_id].tracks_bezier_paths, function(d) {
-                return d.gtype;
-            })
+            .attr('d', function(d) { return d.traditional_path; })
 
         sweeps
             .transition()
             .duration(1000)
-            .attrTween("d", _pathTween(vizObj, "move"));
-
-        // remove genotypes that do not have cellular prevalence values
-        sweeps
-            .exit()
-            .transition()
-            .duration(1000)
-            .attrTween("d", _pathTween(vizObj, "exit"))
-            .remove();
+            .attrTween("d", _pathTween(vizObj, true))
+            .attr("fill-opacity", function(d) { return (d.track_present) ? 1 : 0; })
+            .attr("stroke-opacity", function(d) { return (d.track_present) ? 1 : 0; });
     }
+
     // transition to traditional timesweep view
     else {
-        var sweeps = vizObj.view[patient_id].tsSVG
+        var sweeps = view
             .selectAll('.tsPlot')
-            .data(vizObj.data[patient_id].bezier_paths, function(d) {
-                return d.gtype;
-            })
+            .attr('d', function(d) { return d.track_path; })
 
         sweeps
             .transition()
             .duration(1000)
-            .attrTween("d", _pathTween(vizObj, "move"));
+            .attrTween("d", _pathTween(vizObj, false))
+            .attr("fill-opacity", 1)
+            .attr("stroke-opacity", 1);
 
-        // add those genotypes that do not have cellular prevalence values, but are in the hierarchy
-        sweeps
-            .enter()
-            .insert('path', '.tsPlot')
-            .attr('class', 'tsPlot')
-            .attr("d", _centreLine(vizObj))
-            .attr('fill', function(d) { 
-                return (x.alpha == "NA") ? colour_assignment[d.gtype] : alpha_colour_assignment[d.gtype];
-            }) 
-            .attr('stroke', function(d) { 
-                return (d.gtype == "Root" && vizObj.userConfig.show_root) ? 
-                    dim.rootColour : 
-                    colour_assignment[d.gtype]; 
-            })
-            .attr('fill-opacity', function(d) {
-                return (d.gtype == "Root" && !vizObj.userConfig.show_root) ? 0 : 1;
-            })
-            .attr('stroke-opacity', function(d) {
-                return (d.gtype == "Root" && !vizObj.userConfig.show_root) ? 0 : 1;
-            })
-            .transition()
-            .duration(1000)
-            .attrTween("d", _pathTween(vizObj, "move"));
     }
-    dim.switchView = !dim.switchView;
+    checkbox.id = (checkbox.id == "true") ? "false" : "true";
 }
 
 /* function for genotype mouseover
-* @param {Object} vizObj
+* @param {Object} view -- current htmlwidget view for this patient, accessed by selecting htmlwidget id
 * @param {String} gtype -- the current genotype being moused over
-* @param {String} patient_id -- id of patient
 */
-function _gtypeMouseover(vizObj, gtype, patient_id) {
+function _gtypeMouseover(view, gtype) {
+
     if (gtype != "Root") {
+
         var brightness,
             col,
-            dim = vizObj.generalConfig,
-            colour_assignment = vizObj.view[patient_id].colour_assignment,
-            alpha_colour_assignment = vizObj.view[patient_id].alpha_colour_assignment,
-            patientID_class = 'patientID_' + patient_id,
-            x = vizObj.userConfig;
+            checkboxOff = (view.select("input")[0][0].id == "true"); // whether tracks view checkbox is off (T) or on (F)
 
         // dim other genotypes
-        d3.selectAll('.tsPlot.' + patientID_class)
+        view.selectAll('.tsPlot')
             .attr('fill', function(d) { 
                 if (d.gtype == "Root") {
-                    return dim.rootColour;
+                    return d.root_colour;
                 }
                 else if (d.gtype != gtype) {
-                    col = (x.alpha == "NA") ? colour_assignment[d.gtype] : alpha_colour_assignment[d.gtype];
-                    brightness = Math.round(_get_brightness(col));
-                    return _rgb2hex("rgb(" + brightness + "," + brightness + "," + brightness + ")");
+                    return (d.alpha == "NA") ? d.grey : d.alpha_grey;
                 }
                 else {
-                    return (x.alpha == "NA") ? colour_assignment[d.gtype] : alpha_colour_assignment[d.gtype];
+                    return (d.alpha == "NA") ? d.col : d.alpha_col;
                 }
             })
             .attr('stroke', function(d) { 
                 if (d.gtype == "Root") {
-                    return dim.rootColour;
+                    return d.root_colour;
                 }
                 else if (d.gtype != gtype) {
-                    brightness = Math.round(_get_brightness(colour_assignment[d.gtype]));
-                    return _rgb2hex("rgb(" + brightness + "," + brightness + "," + brightness + ")");
+                    return d.grey;
                 }
                 else {
-                    return (d.gtype == "Root" && vizObj.userConfig.show_root) ? 
-                        dim.rootColour : 
-                        colour_assignment[d.gtype];
+                    return (d.gtype == "Root" && d.show_root) ? d.root_colour : d.col;
                 }
             });
 
         // traditional view
-        if (dim.switchView) { 
+        if (checkboxOff) { 
             // show labels
-            d3.selectAll(".label.gtype_" + gtype + '.' + patientID_class)
+            view.selectAll(".label.gtype_" + gtype)
                 .attr('opacity', 1);
 
             // show label backgrounds
-            d3.selectAll(".labelCirc.gtype_" + gtype + '.' + patientID_class)
+            view.selectAll(".labelCirc.gtype_" + gtype)
                 .attr('fill-opacity', 0.5);                
         }
 
         // tracks view
         else { 
             // show labels
-            d3.selectAll(".sepLabel.gtype_" + gtype + '.' + patientID_class)
+            view.selectAll(".sepLabel.gtype_" + gtype)
                 .attr('opacity', 1);
 
             // show label backgrounds
-            d3.selectAll(".sepLabelCirc.gtype_" + gtype + '.' + patientID_class)
+            view.selectAll(".sepLabelCirc.gtype_" + gtype)
                 .attr('fill-opacity', 0.5);                
         }
     }
 }
 
 /* function for genotype mouseout
-* @param {Object} vizObj
+* @param {Object} view -- current htmlwidget view for this patient, accessed by selecting htmlwidget id
 * @param {String} gtype -- the current genotype being moused over
-* @param {String} patient_id -- id of patient
 */
-function _gtypeMouseout(vizObj, gtype, patient_id) {
+function _gtypeMouseout(view, gtype) {
+
+    var checkboxOff = (view.select("input")[0][0].id == "true"); // whether tracks view checkbox is off (T) or on (F)
+
     if (gtype != "Root") {
-        var dim = vizObj.generalConfig,
-            colour_assignment = vizObj.view[patient_id].colour_assignment,
-            alpha_colour_assignment = vizObj.view[patient_id].alpha_colour_assignment,
-            patientID_class = 'patientID_' + patient_id,
-            x = vizObj.userConfig;
 
         // reset colours
-        d3.selectAll('.tsPlot.' + patientID_class)
+        view.selectAll('.tsPlot')
             .attr('fill', function(d) { 
-                return (x.alpha == "NA") ? colour_assignment[d.gtype] : alpha_colour_assignment[d.gtype];
+                return (d.alpha == "NA") ? d.col : d.alpha_col;
             })
             .attr('stroke', function(d) { 
-                return (d.gtype == "Root" && vizObj.userConfig.show_root) ? 
-                    dim.rootColour : 
-                    colour_assignment[d.gtype];
+                return (d.gtype == "Root" && d.show_root) ? d.root_colour : d.col;
             });
 
         // traditional view
-        if (dim.switchView) {
+        if (checkboxOff) {
             // hide labels
-            d3.selectAll(".label.gtype_" + gtype + '.' + patientID_class)
+            view.selectAll(".label.gtype_" + gtype)
                 .attr('opacity', 0);
 
             // hide label backgrounds
-            d3.selectAll(".labelCirc.gtype_" + gtype)
+            view.selectAll(".labelCirc.gtype_" + gtype)
                 .attr('fill-opacity', 0);
         }
 
         // tracks view
         else {
             // hide labels
-            d3.selectAll(".sepLabel.gtype_" + gtype + '.' + patientID_class)
+            view.selectAll(".sepLabel.gtype_" + gtype)
                 .attr('opacity', 0);
 
             // hide label backgrounds
-            d3.selectAll(".sepLabelCirc.gtype_" + gtype)
+            view.selectAll(".sepLabelCirc.gtype_" + gtype)
                 .attr('fill-opacity', 0);
         }
     }
@@ -560,7 +514,8 @@ function _getLayout(vizObj) {
     else {
 
         // traverse the tree to sort the genotypes into a final vertical stacking order (incorporating hierarchy)
-        vizObj.data[patient_id].layoutOrder = _getStackedLayoutOrder(vizObj.data[patient_id].treeStructure, vizObj.data[patient_id].emergence_values, []);
+        vizObj.data[patient_id].layoutOrder = _getStackedLayoutOrder(vizObj.data[patient_id].treeStructure, 
+            vizObj.data[patient_id].emergence_values, []);
 
         // get layout of each genotype at each timepoint
         if (gtypePos == "stack") {
@@ -1261,7 +1216,15 @@ function _getSeparateCPLabels(vizObj) {
 */
 function _getPaths(vizObj) {
     var dim = vizObj.generalConfig,
-        patient_id = vizObj.patient_id;
+        patient_id = vizObj.patient_id,
+        bezier_paths,
+        tracks_bezier_paths,
+        track_obj, // track object for this genotype
+        track_path, // track path for this genotype
+        track_present; // whether there is a track present for this genotype
+
+
+
 
     // GET PROPORTIONATE, STRAIGHT EDGED PATHS
 
@@ -1272,8 +1235,19 @@ function _getPaths(vizObj) {
     // GET BEZIER PATHS READY FOR PLOTTING
 
     // convert proportionate paths into paths ready for plotting, with bezier curves
-    vizObj.data[patient_id].bezier_paths = _getBezierPaths(vizObj.data[patient_id].traditional_paths, dim.tsSVGWidth, dim.tsSVGHeight);
-    vizObj.data[patient_id].tracks_bezier_paths = _getBezierPaths(vizObj.data[patient_id].tracks_paths, dim.tsSVGWidth, dim.tsSVGHeight);
+    bezier_paths = _getBezierPaths(vizObj.data[patient_id].traditional_paths, dim.tsSVGWidth, dim.tsSVGHeight);
+    tracks_bezier_paths = _getBezierPaths(vizObj.data[patient_id].tracks_paths, dim.tsSVGWidth, dim.tsSVGHeight);
+
+    // combine traditional and track bezier paths into one object for each genotype
+    all_bezier_paths = [];
+    bezier_paths.forEach(function(trad_path) {
+        track_obj = _.findWhere(tracks_bezier_paths, {gtype: trad_path['gtype']}); 
+        track_path = (track_obj) ? track_obj.path : _centreLine(vizObj); 
+        track_present = (track_obj) ? true : false; 
+        all_bezier_paths.push({"gtype": trad_path['gtype'], "traditional_path": trad_path['path'], "track_path": track_path, "track_present": track_present});
+    })
+    vizObj.data[patient_id].all_bezier_paths = all_bezier_paths;
+
 
 }
 
@@ -1575,10 +1549,9 @@ function _centreLine(vizObj) {
 
 /* tween function to transition to the next path ("path" in the data)
 * @param {Object} vizObj
-* @param {String} type - the type of transition ("move" or otherwise - if otherwise, will move to centre line)
-* Note: situations other than "move" - could be an exit situation, where the next path is blank
+* @param {Boolean} toTracks - T/F moving to tracks or away from tracks view
 */
-function _pathTween(vizObj, type) { 
+function _pathTween(vizObj, toTracks) { 
     
     var precision = 4;
 
@@ -1594,7 +1567,7 @@ function _pathTween(vizObj, type) {
             p1;
 
         // for an exit situation, the path to move to is a line in the centre of the timesweep svg
-        dest_path = (type == "move") ? this.__data__.path : _centreLine(vizObj); 
+        dest_path = (toTracks) ? this.__data__.track_path : this.__data__.traditional_path; 
         path0 = this;
         path1 = path0.cloneNode();
         n0 = path0.getTotalLength();
@@ -1668,6 +1641,8 @@ function _getColours(vizObj) {
         dim = vizObj.generalConfig,
         colour_assignment = {}, // standard colour assignment
         alpha_colour_assignment = {}, // alpha colour assignment
+        greyscale_assignment = {}, // standard greyscale assignment
+        alpha_greyscale_assignment = {}, // alpha greyscale assignment
         patient_id = vizObj.patient_id;
 
     var cur_colours = _.filter(x.clone_cols, function(cols){ 
@@ -1679,7 +1654,8 @@ function _getColours(vizObj) {
     if (cur_colours == "NA" || cur_colours.length == 0) {
         var colour_palette = _getColourPalette();
         var chains = _getLinearTreeSegments(vizObj.data[patient_id].treeStructure, {}, "");
-        colour_assignment = _colourTree(vizObj, chains, vizObj.data[patient_id].treeStructure, colour_palette, {}, "Greens");
+        colour_assignment = _colourTree(vizObj, chains, vizObj.data[patient_id].treeStructure, 
+            colour_palette, {}, "Greens");
     }
     // --> otherwise, use specified colours
     else {
@@ -1704,6 +1680,22 @@ function _getColours(vizObj) {
             dim.rootColour : _increase_brightness(colour_assignment[key], x.alpha);
     });
     vizObj.view[patient_id].alpha_colour_assignment = alpha_colour_assignment;
+
+    // get greyscale assignment
+    // --> colour to grey
+    Object.keys(colour_assignment).forEach(function(gtype) {
+        brightness = Math.round(_get_brightness(colour_assignment[gtype]));
+        greyscale_assignment[gtype] = _rgb2hex("rgb(" + brightness + "," + brightness + "," + brightness + ")");
+    })
+    vizObj.view[patient_id].greyscale_assignment = greyscale_assignment;
+
+    // --> alpha to grey
+    Object.keys(alpha_colour_assignment).forEach(function(gtype) {
+        brightness = Math.round(_get_brightness(alpha_colour_assignment[gtype]));
+        alpha_greyscale_assignment[gtype] = _rgb2hex("rgb(" + brightness + "," + brightness + "," + brightness + ")");
+    })
+    vizObj.view[patient_id].alpha_greyscale_assignment = alpha_greyscale_assignment;
+
 
 }
 /*
@@ -1899,18 +1891,4 @@ function _sort2DArrByValue(obj)
     }
 
     return first_elements; 
-}
-
-/* function to generate a random 5-character ID
-* from: http://stackoverflow.com/questions/1349404/generate-a-string-of-5-random-characters-in-javascript
-*/
-function _makeid()
-{
-    var text = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-    for( var i=0; i < 5; i++ )
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-    return text;
 }
