@@ -66,10 +66,10 @@ function _gtypeMouseover(view, gtype) {
                     return d.root_colour;
                 }
                 else if (d.gtype != gtype) {
-                    return (d.alpha == "NA") ? d.grey : d.alpha_grey;
+                    return d.alpha_grey;
                 }
                 else {
-                    return (d.alpha == "NA") ? d.col : d.alpha_col;
+                    return d.alpha_col;
                 }
             })
             .attr('stroke', function(d) { 
@@ -121,7 +121,7 @@ function _gtypeMouseout(view, gtype) {
         // reset colours
         view.selectAll('.tsPlot')
             .attr('fill', function(d) { 
-                return (d.alpha == "NA") ? d.col : d.alpha_col;
+                return d.alpha_col;
             })
             .attr('stroke', function(d) { 
                 return (d.gtype == "Root" && d.show_root) ? d.root_colour : d.col;
