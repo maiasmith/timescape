@@ -308,9 +308,7 @@ HTMLWidgets.widget({
                 return d.alpha_col;
             }) 
             .attr('stroke', function(d) { 
-                return (d.gtype == "Root" && vizObj.userConfig.show_root) ? 
-                    dim.rootColour : 
-                    d.col; 
+                return d.col; 
             })
             .attr('fill-opacity', function(d) {
                 return (d.gtype == "Root" && !vizObj.userConfig.show_root) ? 0 : 1;
