@@ -646,7 +646,7 @@ HTMLWidgets.widget({
             .attr("class", "switchTitle")
             .attr('x', 17)
             .attr('y', 15)
-            .text("Tracks View")
+            .text("Clonal Trajectory")
 
         // when checkbox selected, change view
         vizObj.view[patient_id].tsSwitch.select("input").on("change", function() {
