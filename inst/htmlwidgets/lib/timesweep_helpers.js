@@ -62,10 +62,7 @@ function _gtypeMouseover(view, gtype) {
         // dim other genotypes
         view.selectAll('.tsPlot')
             .attr('fill', function(d) { 
-                if (d.gtype == "Root") {
-                    return d.root_colour;
-                }
-                else if (d.gtype != gtype) {
+                if (d.gtype != gtype) {
                     return d.alpha_grey;
                 }
                 else {
@@ -73,14 +70,11 @@ function _gtypeMouseover(view, gtype) {
                 }
             })
             .attr('stroke', function(d) { 
-                if (d.gtype == "Root") {
-                    return d.root_colour;
-                }
-                else if (d.gtype != gtype) {
+                if (d.gtype != gtype) {
                     return d.grey;
                 }
                 else {
-                    return (d.gtype == "Root" && d.show_root) ? d.root_colour : d.col;
+                    return d.col;
                 }
             });
 
@@ -124,7 +118,7 @@ function _gtypeMouseout(view, gtype) {
                 return d.alpha_col;
             })
             .attr('stroke', function(d) { 
-                return (d.gtype == "Root" && d.show_root) ? d.root_colour : d.col;
+                return d.col;
             });
 
         // traditional view
@@ -1670,7 +1664,7 @@ function _getColours(vizObj) {
             }
             colour_assignment[col.clone_id] = col_value;
         });
-        colour_assignment['Root'] = "#000000";
+        colour_assignment['Root'] = dim.rootColour;
     }
     vizObj.view[patient_id].colour_assignment = colour_assignment;
 
