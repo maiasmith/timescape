@@ -449,18 +449,22 @@ HTMLWidgets.widget({
 
         // PLOT PERTURBATIONS INFO
 
+        // user specified perturbations in the time-series data
+        var perturbations = _.filter(vizObj.userConfig.perturbations, function(perts){  
+            return perts.patient_name == vizObj.patient_id; 
+        });
+    
         // plot labels
         vizObj.view[patient_id].xAxisSVG
             .selectAll('.pertLabel')
-            .data(vizObj.userConfig.perturbations)
+            .data(perturbations)
             .enter().append('text')
             .attr('class', 'pertLabel')
             .attr('x', function(d) { 
                 var prevTP_idx = vizObj.data[patient_id].timepoints.indexOf(d.prev_tp);
                 return ((prevTP_idx + 0.5) / (vizObj.data[patient_id].timepoints.length-1)) * (dim.tsSVGWidth); 
             })
-            .attr('y', 0)
-            .attr('dy', '.71em')
+            .attr('y', dim.padding - dim.smallMargin)
             .text(function(d) { return d.pert_name; })
             .on('mouseover', function(d) {
                 vizObj.view[patient_id].tsSVG.selectAll(".pertGuide.pert_" + d.pert_name).attr('stroke-opacity', 1); 
@@ -472,7 +476,7 @@ HTMLWidgets.widget({
         // plot guides
         vizObj.view[patient_id].tsSVG
             .selectAll('.pertGuide')
-            .data(vizObj.userConfig.perturbations)
+            .data(perturbations)
             .enter().append('line')
             .attr('class', function(d) { return 'pertGuide pert_' + d.pert_name; })
             .attr('x1', function(d) { 
