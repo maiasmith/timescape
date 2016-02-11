@@ -305,7 +305,7 @@ HTMLWidgets.widget({
             .attr('class', 'tsPlot')
             .attr('d', function(d) { return d.traditional_path; })
             .attr('fill', function(d) { 
-                return (x.alpha == "NA") ? d.col : d.alpha_col;
+                return d.alpha_col;
             }) 
             .attr('stroke', function(d) { 
                 return (d.gtype == "Root" && vizObj.userConfig.show_root) ? 
@@ -453,7 +453,7 @@ HTMLWidgets.widget({
         var perturbations = _.filter(vizObj.userConfig.perturbations, function(perts){  
             return perts.patient_name == vizObj.patient_id; 
         });
-    
+
         // plot labels
         vizObj.view[patient_id].xAxisSVG
             .selectAll('.pertLabel')
