@@ -78,10 +78,6 @@ HTMLWidgets.widget({
 
     // SET UP BODY
 
-    // grey background colour
-    d3.select("body")
-        .style("background-color", dim.backgroundColour);
-
     // CONTAINER DIV
     var random_id = _makeid();
     var containerDIV = d3.select(el)
