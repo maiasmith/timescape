@@ -25,7 +25,7 @@ function _switchView(view, checkbox) {
         sweeps
             .transition()
             .duration(1000)
-            .attrTween("d", _pathTween(vizObj, true))
+            .attrTween("d", _pathTween(true))
             .attr("fill-opacity", function(d) { return (d.track_present) ? 1 : 0; })
             .attr("stroke-opacity", function(d) { return (d.track_present) ? 1 : 0; });
     }
@@ -39,7 +39,7 @@ function _switchView(view, checkbox) {
         sweeps
             .transition()
             .duration(1000)
-            .attrTween("d", _pathTween(vizObj, false))
+            .attrTween("d", _pathTween(false))
             .attr("fill-opacity", 1)
             .attr("stroke-opacity", 1);
 
@@ -1542,10 +1542,9 @@ function _centreLine(vizObj) {
 }
 
 /* tween function to transition to the next path ("path" in the data)
-* @param {Object} vizObj
 * @param {Boolean} toTracks - T/F moving to tracks or away from tracks view
 */
-function _pathTween(vizObj, toTracks) { 
+function _pathTween(toTracks) { 
     
     var precision = 4;
 
