@@ -89,18 +89,14 @@
 #'
 #'     }
 #' @param perturbations \code{data.frame} (Optional) Any  
-#'     perturbations that occurred between two time points, 
-#'     and the fraction of total tumour content remaining
-#'     at the time of perturbation. Required columns are:
+#'     perturbations that occurred between two time points. 
+#'     Required columns are:
 #'     \describe{
 #'
 #'       \item{pert_name:}{\code{character()} the perturbation name.}
 #' 
 #'       \item{prev_tp:}{\code{character()} the time point (as labelled 
 #'          in clonal prevalence data) BEFORE perturbation.}
-#'
-#'       \item{frac:}{\code{numeric()} the fraction of total tumour 
-#'          content remaining at the time of perturbation, range [0, 1].}
 #'
 #'     }
 #' @param sort \code{logical()} (Optional) Whether (TRUE) or not (FALSE) 
@@ -133,8 +129,7 @@
 #'
 #' # perturbations
 #' perturbations <- data.frame( pert_name = c("Chemotherapy"), 
-#'                              prev_tp = c("Diagnosis"),
-#'                               frac = c(0.1))
+#'                              prev_tp = c("Diagnosis"))
 #'
 #' # run timescape
 #' timescape(clonal_prev = clonal_prev, tree_edges = tree_edges, 
@@ -254,13 +249,10 @@ renderTimescape <- function(expr, env = parent.frame(), quoted = FALSE) {
 #'   "centre" -- genotypes are centred with respect to their ancestors
 #'   "stack" -- genotypes are stacked such that no genotype is split at any time point
 #'   "space" -- genotypes are stacked but with a bit of spacing at the bottom
-#' @param perturbations -- data frame (Optional) of any perturbations that occurred between two time points, 
-#'   and the fraction of total tumour content remaining.
+#' @param perturbations -- data frame (Optional) of any perturbations that occurred between two time points.
 #'   Format: columns are (1) character() "pert_name" - the perturbation name
 #'                       (2) character() "prev_tp" - the time point (as labelled in clonal prevalence data) 
-#'                                                BEFORE perturbation
-#'                       (3) numeric() "frac" - the fraction of total tumour content remaining at the 
-#'                                             time of perturbation, range [0, 1].
+#'                                                BEFORE perturbation.
 #' @param sort -- Boolean (Optional) of whether (TRUE) or not (FALSE) to vertically sort the genotypes by their emergence values (descending). 
 #'                       Default is FALSE. 
 #'                       Note that genotype sorting will always retain the phylogenetic hierarchy, and this parameter will only affect the ordering of siblings.
@@ -550,7 +542,7 @@ checkCloneColours <- function(clone_colours) {
 #'
 #' @param perturbations -- perturbations provided by user
 #' @examples
-#' checkPerts(data.frame(pert_name = c("New Drug"), prev_tp = c("Diagnosis"), frac = c(0.1)))
+#' checkPerts(data.frame(pert_name = c("New Drug"), prev_tp = c("Diagnosis"))
 #' @export
 #' @rdname helpers
 #' @return Perturbations after checking them for content types and column names
@@ -560,16 +552,14 @@ checkPerts <- function(perturbations) {
 
     # ensure column names are correct
     if (!("pert_name" %in% colnames(perturbations)) ||
-        !("prev_tp" %in% colnames(perturbations)) ||
-        !("frac" %in% colnames(perturbations))) {
+        !("prev_tp" %in% colnames(perturbations))) {
       stop("Perturbations data frame must have the following column names: ", 
-          "\"pert_name\", \"prev_tp\", \"frac\"")
+          "\"pert_name\", \"prev_tp\"")
     }
 
     # check that columns are of the correct type
     perturbations$pert_name <- as.character(perturbations$pert_name)
     perturbations$prev_tp <- as.character(perturbations$prev_tp)
-    perturbations$frac <- as.character(perturbations$frac)
   }
 
   return(perturbations)

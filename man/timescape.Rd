@@ -92,18 +92,14 @@ sweeps, range [0, 100].}
     }}
 
 \item{perturbations}{\code{data.frame} (Optional) Any
-    perturbations that occurred between two time points, 
-    and the fraction of total tumour content remaining
-    at the time of perturbation. Required columns are:
+    perturbations that occurred between two time points. 
+    Required columns are:
     \describe{
 
       \item{pert_name:}{\code{character()} the perturbation name.}
 
       \item{prev_tp:}{\code{character()} the time point (as labelled 
          in clonal prevalence data) BEFORE perturbation.}
-
-      \item{frac:}{\code{numeric()} the fraction of total tumour 
-         content remaining at the time of perturbation, range [0, 1].}
 
     }}
 
@@ -162,8 +158,7 @@ mutations <- read.csv(system.file("extdata", "AML_mutations.csv",
 
 # perturbations
 perturbations <- data.frame( pert_name = c("Chemotherapy"), 
-                             prev_tp = c("Diagnosis"),
-                              frac = c(0.1))
+                             prev_tp = c("Diagnosis"))
 
 # run timescape
 timescape(clonal_prev = clonal_prev, tree_edges = tree_edges, 
@@ -188,4 +183,3 @@ clone_colours <- data.frame(clone_id = c("A","B","C","D","E"),
 timescape(clonal_prev = clonal_prev, tree_edges = tree_edges, 
     clone_colours = clone_colours, height=260, alpha=15)
 }
-

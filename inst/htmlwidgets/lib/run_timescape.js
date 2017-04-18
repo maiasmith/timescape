@@ -2394,21 +2394,15 @@ function _run_timescape(view_id, width, height, userConfig) {
 	        paths = [],
 	        cur_path,
 	        emerges, // whether or not a genotype emerges at a time point
-	        xShift_in_layout, // the amount of shift in the x-direction for a genotype (when it's emerging), 
-	                          // as is present in the layout data
 	        xShift, // the amount of shift in the x-direction for a genotype (when it's emerging), 
-	                // taking into account events that occur
+	                          // as is present in the layout data
 	        nPartitions, // number of partitions between two time points 
 	        next_tp, 
 	        xBottom, // x-value at the bottom of the genotype sweep at a time point
 	        xTop, // x-value at the top of the genotype sweep at a time point
 	        y_mid, // y proportion as halfway between this and the next time point
 	        appear_xBottom,
-	        appear_xTop,
-	        event_occurs, // whether or not an event occurs after a time point
-	        event_index, // index of the current event 
-	        perturbations = curVizObj.userConfig.perturbations, // user specified perturbations in the time-series data
-	        frac; // fraction of total tumour content remaining at the perturbation event;
+	        appear_xTop;
 
 	    $.each(layoutOrder, function(gtype_idx, gtype) {
 	        
@@ -2418,22 +2412,12 @@ function _run_timescape(view_id, width, height, userConfig) {
 	        // for each time point (in sequence)...
 	        $.each(timepoints, function(idx, tp) {
 	            
-	            // whether or not an event occurs after this timepoint
-	            event_occurs = (_getIntersection(_.pluck(perturbations, "prev_tp"), tp).length > 0);
-	            event_index = _.pluck(perturbations, "prev_tp").indexOf(tp);
-
 	            // if the genotype exists or emerges/disappears at this time point
 	            if (layout[tp][gtype]) {
 	                emerges = (layout[tp][gtype].state == "emerges");
-	                nPartitions = (event_occurs) ?
-	                    layout[tp][gtype].nPartitions*2 :
-	                    layout[tp][gtype].nPartitions;
+	                nPartitions = layout[tp][gtype].nPartitions;
 	                next_tp = timepoints[idx+1];
-	                xShift_in_layout = (layout[tp][gtype].xShift) ? layout[tp][gtype].xShift : 0;
-	                xShift = 
-	                    (event_occurs) ? 
-	                    0.5 + (xShift_in_layout/2) : 
-	                    xShift_in_layout;
+	                xShift = (layout[tp][gtype].xShift) ? layout[tp][gtype].xShift : 0;
 
 	                // get the x-coordinate for the bottom of this genotype's interval 
 	                xBottom = (emerges) ? 
@@ -2463,20 +2447,6 @@ function _run_timescape(view_id, width, height, userConfig) {
 	                                            "y": layout[tp][gtype].bottom,
 	                                            "tp": tp });
 
-	                    // if event occurs after this timepoint
-	                    if (event_occurs) {
-
-	                        frac = perturbations[event_index].frac;
-
-	                        // get y proportion as halfway between this and the next time point
-	                        y_mid = (layout[next_tp][gtype].bottom + layout[tp][gtype].bottom)/2;
-
-	                        // add a point in the middle
-	                        cur_path.path.push({ "x": xBottom + mid_tp, // halfway between this and next tp
-	                                                "y": (y_mid*frac) + ((1-frac)/2),
-	                                                "tp": "event" });
-	                    }
-
 	                    // if there are partitions after this timepoint, add a pathpoint at the first partition
 	                    if (next_tp && layout[next_tp][gtype] && layout[tp][gtype].nPartitions > 1) {
 	                        var next_xBottom = (idx + xShift + (1/nPartitions))/(timepoints.length-1);
@@ -2491,22 +2461,12 @@ function _run_timescape(view_id, width, height, userConfig) {
 	        // for each time point (in *reverse* sequence)...
 	        $.each(timepoints_rev, function(idx, tp) {
 
-	            // whether or not an event occurs after this timepoint
-	            event_occurs = (_getIntersection(_.pluck(perturbations, "prev_tp"), tp).length > 0);
-	            event_index = _.pluck(perturbations, "prev_tp").indexOf(tp);
-
 	            // if the genotype exists or emerges/disappears at this time point
 	            if (layout[tp][gtype]) {
 	                emerges = (layout[tp][gtype].state == "emerges");
-	                nPartitions = (event_occurs) ?
-	                    layout[tp][gtype].nPartitions*2 :
-	                    layout[tp][gtype].nPartitions;
+	                nPartitions = layout[tp][gtype].nPartitions;
 	                next_tp = timepoints_rev[idx-1];
-	                xShift_in_layout = (layout[tp][gtype].xShift) ? layout[tp][gtype].xShift : 0;
-	                xShift = 
-	                    (event_occurs) ? 
-	                    0.5 + (xShift_in_layout/2) : 
-	                    xShift_in_layout;
+	                xShift = (layout[tp][gtype].xShift) ? layout[tp][gtype].xShift : 0;
 
 	                // get the x-coordinate for the top of this genotype's interval 
 	                xTop = (emerges) ? 
@@ -2531,27 +2491,12 @@ function _run_timescape(view_id, width, height, userConfig) {
 	                // ... DOESN'T EMERGE at the current time point
 	                else {
 
-
 	                    // if there are partitions after this timepoint, add a pathpoint at the first partition
 	                    if (next_tp && layout[next_tp][gtype] && layout[tp][gtype].nPartitions > 1) {
 	                        var next_xTop = ((timepoints.length-1) - idx + xShift + (1/nPartitions))/(timepoints.length-1);
 	                        cur_path.path.push({ "x": next_xTop, 
 	                                            "y": layout[next_tp][gtype].top,
 	                                            "tp": tp });
-	                    }
-
-	                    // if event occurs after this timepoint
-	                    if (event_occurs) {
-
-	                        frac = perturbations[event_index].frac;
-
-	                        // get y proportion as halfway between this and the next time point
-	                        y_mid = (layout[next_tp][gtype].top + layout[tp][gtype].top)/2;
-
-	                        // add a point in the middle
-	                        cur_path.path.push({ "x": xTop + mid_tp, // halfway between this and next tp
-	                                                "y": (y_mid*frac) + ((1-frac)/2), 
-	                                                "tp": "event" });
 	                    }
 
 	                    // add a path point for the top of the genotype's interval at the current time point

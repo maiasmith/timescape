@@ -48,8 +48,7 @@ clonal_prev <- read.csv(system.file("extdata", "AML_clonal_prev.csv", package = 
 mutations <- read.csv(system.file("extdata", "AML_mutations.csv", package = "timescape"))
 # perturbations
 perturbations <- data.frame( pert_name = c("Chemotherapy"), 
-                             prev_tp = c("Diagnosis"),
-                              frac = c(0.1))
+                             prev_tp = c("Diagnosis"))
 # run timescape
 timescape(clonal_prev = clonal_prev, tree_edges = tree_edges, perturbations = perturbations, height=260)
 ```
@@ -163,13 +162,12 @@ timescape(clonal_prev = clonal_prev, tree_edges = tree_edges, height=260, alpha=
 timescape(clonal_prev = clonal_prev, tree_edges = tree_edges, height=260, alpha=15, genotype_position="centre")
 ```
 
-## Perturbations
+## Perturbation events
 
-Perturbations may be added to the TimeScape using the $perturbations$ parameter, which is a data frame consisting of the following columns:
+Perturbation events may be added to the TimeScape using the $perturbations$ parameter. Adding perturbations will simply add a label along the x-axis where the perturbation occurs. The $perturbations$ parameter is a data frame consisting of the following columns:
 
-1. character() $pert_name$ - the perturbation name
-2. character() $prev_tp$ - the time point (as labelled in clonal prevalence data) BEFORE perturbation
-3. numeric() $frac$ - the fraction of total tumour content remaining at the time of perturbation, range [0, 1].
+1. character() $pert\_name$ - the perturbation name
+2. character() $prev\_tp$ - the time point (as labelled in clonal prevalence data) BEFORE perturbation.
 
 ### Without perturbation
 
@@ -186,13 +184,12 @@ mutations <- read.csv(system.file("extdata", "AML_mutations.csv", package = "tim
 timescape(clonal_prev = clonal_prev, tree_edges = tree_edges, height=260)
 ```
 
-### With perturbation (reduces the tumour to 10% of its original size)
+### With perturbation
 
 ```{r, echo=FALSE}
 # perturbations
 perturbations <- data.frame( pert_name = c("Chemotherapy"), 
-                             prev_tp = c("Diagnosis"),
-                              frac = c(0.1))
+                             prev_tp = c("Diagnosis"))
 # run timescape
 timescape(clonal_prev = clonal_prev, tree_edges = tree_edges, perturbations = perturbations, height=260)
 ```
